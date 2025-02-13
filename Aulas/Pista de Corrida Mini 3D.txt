@@ -1,6 +1,3 @@
-Pista de Corrida Mini 3D
 Snake 3D
 Flappy Bird 3D
-Labirinto 3D (Maze Escape)
-Corrida Infinita (Endless Runner)
 Jogo de Pong 3D
