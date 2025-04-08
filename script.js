@@ -17,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(
 
 const renderer = new THREE.WebGLRenderer();
 renderer.shadowMap.enabled = true;   
-renderer.outputEncoding = THREE.sRGBEncoding; // Adiciona esta linha
+renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
