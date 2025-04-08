@@ -16,7 +16,8 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const renderer = new THREE.WebGLRenderer();
-renderer.shadowMap.enabled = true;          
+renderer.shadowMap.enabled = true;   
+renderer.outputColorSpace = THREE.SRGBColorSpace; // Adiciona esta linha
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
