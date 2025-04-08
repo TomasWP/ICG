@@ -1,3 +1,0 @@
-Snake 3D
-Flappy Bird 3D
-Jogo de Pong 3D
