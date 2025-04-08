@@ -5,7 +5,7 @@ await import('https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js');
 
 import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js';
-import { Sky } from 'https://threejs.org/examples/jsm/objects/Sky.js';
+import { Sky } from 'https://unpkg.com/three@0.150.1/examples/jsm/objects/Sky.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -62,30 +62,42 @@ class Box extends THREE.Mesh {
     }
 }
 
-//Sky
-const sky = new Sky();
-sky.scale.setScalar(450000);
-scene.add(sky)
-
-//cube
+//Cube
 const cube = new Box({width: 1, height: 1, depth: 1, velocity: {x: 0, y: -0.01, z: 0}});
 cube.castShadow = true;
 scene.add(cube);
 
-//ground
+//Ground
 const ground = new Box({width: 5, height: 0.5, depth: 10, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
 ground.receiveShadow = true;
 scene.add(ground);
 
 //Light
-const light = new THREE.DirectionalLight(0xffffff, 1);
+const light = new THREE.DirectionalLight(0xffffff, 0.5);
 light.position.x = 3;
 light.position.y = 4;
 light.position.z = -3;
 light.castShadow = true;
 scene.add(light);
 
-//camera position
+//Ambient Light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+scene.add(ambientLight);
+
+//Sky
+const sky = new Sky();
+sky.scale.setScalar(450000);
+scene.add(sky);
+const skyUniforms = sky.material.uniforms;
+skyUniforms['turbidity'].value = 1;
+skyUniforms['rayleigh'].value = .1;
+skyUniforms['mieCoefficient'].value = 0.005;
+skyUniforms['mieDirectionalG'].value = 0.8; 
+const sun = new THREE.Vector3();
+sun.set(light.position.x, light.position.y, light.position.z);
+skyUniforms['sunPosition'].value.copy(sun);
+
+//Camera position
 camera.position.z = 8;
 camera.position.x = 5;
 camera.position.y = 2;
@@ -158,8 +170,8 @@ function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 
-  //movement code
-  cube.velocity.x = 0;      //reset velocity
+  //Movement code
+  cube.velocity.x = 0;      //Reset velocity
   cube.velocity.z = 0;      
   if (keys.a.pressed) {
     cube.velocity.x -= 0.03;
