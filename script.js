@@ -5,6 +5,7 @@ await import('https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js');
 
 import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js';
+import { Sky } from 'https://threejs.org/examples/jsm/objects/Sky.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -60,6 +61,11 @@ class Box extends THREE.Mesh {
         }
     }
 }
+
+//Sky
+const sky = new Sky();
+sky.scale.setScalar(450000);
+scene.add(sky)
 
 //cube
 const cube = new Box({width: 1, height: 1, depth: 1, velocity: {x: 0, y: -0.01, z: 0}});
