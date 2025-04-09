@@ -69,7 +69,7 @@ cube.castShadow = true;
 scene.add(cube);
 
 //Ground
-const ground = new Box({width: 7, height: 0.5, depth: 15, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
+const ground = new Box({width: 5, height: 0.5, depth: 10, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
 ground.receiveShadow = true;
 scene.add(ground);
 
