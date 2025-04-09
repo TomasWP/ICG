@@ -74,7 +74,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 //Light
-const light = new THREE.DirectionalLight(0xffffff, 0.7);
+const light = new THREE.DirectionalLight(0xffffff, 0.5);
 light.position.x = 3;
 light.position.y = 4;
 light.position.z = -3;
@@ -91,7 +91,7 @@ sky.scale.setScalar(450000);
 scene.add(sky);
 const skyUniforms = sky.material.uniforms;
 skyUniforms['turbidity'].value = 1;
-skyUniforms['rayleigh'].value = .1;
+skyUniforms['rayleigh'].value = .3;
 skyUniforms['mieCoefficient'].value = 0.005;
 skyUniforms['mieDirectionalG'].value = 0.8; 
 const sun = new THREE.Vector3();
