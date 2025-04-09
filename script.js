@@ -90,7 +90,7 @@ const sky = new Sky();
 sky.scale.setScalar(450000);
 scene.add(sky);
 const skyUniforms = sky.material.uniforms;
-skyUniforms['turbidity'].value = 1;
+skyUniforms['turbidity'].value = 2;
 skyUniforms['rayleigh'].value = .3;
 skyUniforms['mieCoefficient'].value = 0.005;
 skyUniforms['mieDirectionalG'].value = 0.8; 
