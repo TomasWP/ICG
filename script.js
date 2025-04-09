@@ -16,6 +16,9 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const renderer = new THREE.WebGLRenderer();
+renderer.physicallyCorrectLights = true; // Para iluminação realista
+renderer.toneMapping = THREE.ACESFilmicToneMapping; // Melhor mapeamento de tons
+renderer.toneMappingExposure = 1; // Ajustar exposição
 renderer.shadowMap.enabled = true;   
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
