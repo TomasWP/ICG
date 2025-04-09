@@ -17,8 +17,6 @@ const camera = new THREE.PerspectiveCamera(
 
 const renderer = new THREE.WebGLRenderer();
 renderer.physicallyCorrectLights = true; // Para iluminação realista
-renderer.toneMapping = THREE.ACESFilmicToneMapping; // Melhor mapeamento de tons
-renderer.toneMappingExposure = 1; // Ajustar exposição
 renderer.shadowMap.enabled = true;   
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -72,7 +70,7 @@ cube.castShadow = true;
 scene.add(cube);
 
 //Ground
-const ground = new Box({width: 5, height: 0.5, depth: 10, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
+const ground = new Box({width: 7, height: 0.5, depth: 15, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
 ground.receiveShadow = true;
 scene.add(ground);
 
@@ -84,8 +82,22 @@ light.position.z = -3;
 light.castShadow = true;
 scene.add(light);
 
+// Configurar o shadow camera da luz direcional
+light.shadow.camera.left = -15;
+light.shadow.camera.right = 15;
+light.shadow.camera.top = 15;
+light.shadow.camera.bottom = -15;
+
+// Aumentar a resolução do mapa de sombras para melhorar a qualidade
+light.shadow.mapSize.width = 4096;
+light.shadow.mapSize.height = 4096;
+
+// Ajustar a distância máxima para calcular sombras
+light.shadow.camera.near = 0.1;
+light.shadow.camera.far = 100;
+
 //Ambient Light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
 //Sky
@@ -96,13 +108,13 @@ const skyUniforms = sky.material.uniforms;
 skyUniforms['turbidity'].value = 1;
 skyUniforms['rayleigh'].value = .1;
 skyUniforms['mieCoefficient'].value = 0.005;
-skyUniforms['mieDirectionalG'].value = 0.8; 
+skyUniforms['mieDirectionalG'].value = .8; 
 const sun = new THREE.Vector3();
 sun.set(light.position.x, light.position.y, light.position.z);
 skyUniforms['sunPosition'].value.copy(sun);
 
 //Camera position
-camera.position.z = 8;
+camera.position.z = 10;
 camera.position.x = 5;
 camera.position.y = 2;
 camera.lookAt(cube.position);
