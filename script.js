@@ -91,7 +91,7 @@ sky.scale.setScalar(450000);
 scene.add(sky);
 const skyUniforms = sky.material.uniforms;
 skyUniforms['turbidity'].value = 2;
-skyUniforms['rayleigh'].value = .3;
+skyUniforms['rayleigh'].value = .6;
 skyUniforms['mieCoefficient'].value = 0.005;
 skyUniforms['mieDirectionalG'].value = 0.8; 
 const sun = new THREE.Vector3();
