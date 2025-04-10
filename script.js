@@ -182,13 +182,21 @@ window.addEventListener('keyup', (event) => {
     }
 })
 
-let tiltX = 0;
-let tiltY = 0;
+let neutralTiltX = null;
+let neutralTiltY = null;
 
 window.addEventListener('deviceorientation', (event) => {
-    tiltX = event.gamma; 
-    tiltY = event.beta-30; 
+    // Se ainda não calibrado, guardar como neutro
+    if (neutralTiltX === null || neutralTiltY === null) {
+        neutralTiltX = event.gamma;
+        neutralTiltY = event.beta;
+    }
+
+    // Aplicar correção
+    tiltX = event.gamma - neutralTiltX;
+    tiltY = event.beta - neutralTiltY;
 });
+
 
 function animate() {
   requestAnimationFrame(animate);
