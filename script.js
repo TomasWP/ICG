@@ -193,6 +193,25 @@ window.addEventListener('deviceorientation', (event) => {
     tiltY = event.beta;  // Inclinação no eixo Y (frente/trás)
 });
 
+// Criar o botão de reset
+const resetButton = document.createElement('button');
+resetButton.innerText = 'Reset Tilt';
+resetButton.style.position = 'absolute';
+resetButton.style.bottom = '20px';
+resetButton.style.left = '50%';
+resetButton.style.transform = 'translateX(-50%)';
+resetButton.style.padding = '10px 20px';
+resetButton.style.fontSize = '16px';
+resetButton.style.zIndex = '1000';
+document.body.appendChild(resetButton);
+
+// Evento para redefinir o tilt
+resetButton.addEventListener('click', () => {
+    tiltOffsetX = tiltX; // Definir o offset X como o valor atual
+    tiltOffsetY = tiltY; // Definir o offset Y como o valor atual
+    console.log('Tilt resetado:', { tiltOffsetX, tiltOffsetY });
+});
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -213,12 +232,12 @@ function animate() {
   }
 
     // Controles baseados na inclinação do dispositivo
-    if (Math.abs(tiltX) > 5) { // Sensibilidade no eixo X
-        cube.velocity.x = Math.sign(tiltX) * 0.045; // Direção baseada na inclinação
-      }
-      if (Math.abs(tiltY) > 5) { // Sensibilidade no eixo Y
-        cube.velocity.z = Math.sign(tiltY) * 0.045; // Direção baseada na inclinação
-      }
+    if (Math.abs(tiltX) > 5) { // Sensibilidade para o eixo X
+        cube.velocity.x += (tiltX - tiltOffsetX) * 0.001; // Ajustar a velocidade com base na inclinação
+    }
+    if (Math.abs(tiltY) > 5) { // Sensibilidade para o eixo Y
+        cube.velocity.z += (tiltY - tiltOffsetY) * 0.001; // Ajustar a velocidade com base na inclinação
+    }
 
   cube.update(ground);
 }
