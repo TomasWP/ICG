@@ -185,8 +185,7 @@ window.addEventListener('keyup', (event) => {
 let tiltX = 0;
 let tiltY = 0;
 
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // Verifica se é um dispositivo móvel
-console.log(isMobile); // Para depuração
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); 
 
 if (isMobile) {
   window.addEventListener('deviceorientation', (event) => {
