@@ -75,7 +75,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 //Light
-const light = new THREE.DirectionalLight(0xffffff, 1);
+const light = new THREE.DirectionalLight(0xffffff, 2.5);
 light.position.x = 3;
 light.position.y = 4;
 light.position.z = -3;
