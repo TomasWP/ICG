@@ -162,18 +162,29 @@ window.addEventListener('keyup', (event) => {
 // Variáveis para armazenar a inclinação do dispositivo
 let tiltX = 0;
 let tiltY = 0;
-let initialTiltX = null;
-let initialTiltY = null;
+let tiltOffsetX = 0; // Offset inicial para o eixo X
+let tiltOffsetY = 0; // Offset inicial para o eixo Y
 
-// Calibração inicial automática
+// Adicionar evento para capturar a orientação do dispositivo
 window.addEventListener('deviceorientation', (event) => {
-    if (initialTiltX === null || initialTiltY === null) {
-        initialTiltX = event.gamma;
-        initialTiltY = event.beta;
-    }
+    tiltX = event.gamma; // Inclinação no eixo X (esquerda/direita)
+    tiltY = event.beta;  // Inclinação no eixo Y (frente/trás)
 
-    tiltX = event.gamma - initialTiltX;
-    tiltY = event.beta - initialTiltY;
+    // Configurar os offsets iniciais na primeira execução
+    if (tiltOffsetX === 0 && tiltOffsetY === 0) {
+        tiltOffsetX = tiltX;
+        tiltOffsetY = tiltY;
+    }
+});
+
+// Selecionar o botão de reset
+const resetTiltBtn = document.getElementById('resetTiltBtn');
+
+// Evento para redefinir o tilt
+resetTiltBtn.addEventListener('click', () => {
+    tiltOffsetX = tiltX; // Redefinir o offset X para o valor atual
+    tiltOffsetY = tiltY; // Redefinir o offset Y para o valor atual
+    console.log('Tilt resetado:', { tiltOffsetX, tiltOffsetY });
 });
 
 function animate() {
@@ -189,11 +200,12 @@ function animate() {
     if (keys.w.pressed) cube.velocity.z = -0.045;
     else if (keys.s.pressed) cube.velocity.z = 0.045;
 
-    if (Math.abs(tiltX) > 5) {
-        cube.velocity.x += tiltX * 0.001;
+    // Controles baseados na inclinação do dispositivo
+    if (Math.abs(tiltX - tiltOffsetX) > 5) { // Sensibilidade no eixo X
+        cube.velocity.x = Math.sign(tiltX - tiltOffsetX) * 0.045;
     }
-    if (Math.abs(tiltY) > 5) {
-        cube.velocity.z += tiltY * 0.001;
+    if (Math.abs(tiltY - tiltOffsetY) > 5) { // Sensibilidade no eixo Y
+        cube.velocity.z = Math.sign(tiltY - tiltOffsetY) * 0.045;
     }
 
     cube.update(ground);
