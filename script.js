@@ -212,9 +212,12 @@ function animate() {
   if (Math.abs(tiltX) > 5) { // Sensibilidade
     cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
-  if (tiltY < -35 || tiltY > -35) { // Sensibilidade
-    cube.velocity.z = Math.sign(tiltY) * 0.045;
-  }
+
+    const adjustedTiltY = tiltY - 30; 
+
+    if (Math.abs(adjustedTiltY) > 5) { // Sensibilidade para o eixo Z (frente/trás)
+      cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
+    }
 
   cube.update(ground);
 }
