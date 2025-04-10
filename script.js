@@ -209,13 +209,13 @@ function animate() {
     cube.velocity.z = 0.045;
   }
 
-  if (Math.abs(tiltX) > 5) { // Sensibilidade
+  if (Math.abs(tiltX) > 2) { // Sensibilidade
     cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
 
     const adjustedTiltY = tiltY - 35; 
 
-    if (Math.abs(adjustedTiltY) > 30) { // Sensibilidade para o eixo Z (frente/trás)
+    if (Math.abs(adjustedTiltY) > 33) { // Sensibilidade para o eixo Z (frente/trás)
       cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
     }
 
