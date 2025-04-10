@@ -55,10 +55,10 @@ class Box extends THREE.Mesh {
     applyGravity() {                     
         this.velocity.y += this.gravity; //gravity
 
-        if(this.bottom + this.velocity.y <= ground.top) {   //monnitor ground collision
-            this.velocity.y *= 0.8; //bounce friction
-            this.velocity.y = -this.velocity.y;        
-        }else{
+        if (this.bottom + this.velocity.y <= ground.top) {
+            this.velocity.y = 0;
+            this.position.y = ground.top + this.height / 2; // posiciona em cima do chão
+        } else {
             this.position.y += this.velocity.y;
         }
     }
