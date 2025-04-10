@@ -187,7 +187,7 @@ let tiltY = 0;
 
 window.addEventListener('deviceorientation', (event) => {
     tiltX = event.gamma; 
-    tiltY = event.beta+30; 
+    tiltY = event.beta-30; 
 });
 
 function animate() {
