@@ -16,7 +16,7 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const renderer = new THREE.WebGLRenderer();
-renderer.physicallyCorrectLights = true; // Para iluminação realista
+renderer.physicallyCorrectLights = true; //Iluminação realista
 renderer.shadowMap.enabled = true;   
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -212,7 +212,7 @@ function animate() {
     cube.velocity.z = 0.045;
   }
 
-  // Movimento baseado em orientação (só para dispositivos móveis)
+  // Movimento baseado em orientação para dispositivos móveis
   if (isMobile) {
     if (Math.abs(tiltX) > 3) {  // Sensibilidade para o eixo X (esquerda/direita)
         cube.velocity.x = Math.sign(tiltX) * 0.05;
