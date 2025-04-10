@@ -182,6 +182,14 @@ window.addEventListener('keyup', (event) => {
     }
 })
 
+let tiltX = 0;
+let tiltY = 0;
+
+window.addEventListener('deviceorientation', (event) => {
+    tiltX = event.gamma; 
+    tiltY = event.beta; 
+});
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -190,15 +198,22 @@ function animate() {
   cube.velocity.x = 0;      //Reset velocity
   cube.velocity.z = 0;      
   if (keys.a.pressed) {
-    cube.velocity.x -= 0.03;
+    cube.velocity.x -= 0.045;
   } else if (keys.d.pressed) {
-    cube.velocity.x = 0.03;
+    cube.velocity.x = 0.045;
   }
   
   if (keys.w.pressed) {
-    cube.velocity.z = -0.035;
+    cube.velocity.z = -0.045;
   } else if (keys.s.pressed) {
-    cube.velocity.z = 0.035;
+    cube.velocity.z = 0.045;
+  }
+
+  if (Math.abs(tiltX) > 5) { // Sensibilidade
+    cube.velocity.x = Math.sign(tiltX) * 0.045;
+    }
+  if (Math.abs(tiltY) > 5) {
+    cube.velocity.z = Math.sign(tiltY) * 0.045;
   }
 
   cube.update(ground);
