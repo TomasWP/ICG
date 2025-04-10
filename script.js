@@ -1,5 +1,3 @@
-// TODO: End game scenario
-// TODO: Enemy spawning
 // TODO: Replace cube and obstacle with 3D models
 
 await import('https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js');    
