@@ -186,6 +186,7 @@ let tiltX = 0;
 let tiltY = 0;
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // Verifica se é um dispositivo móvel
+console.log(isMobile); // Para depuração
 
 if (isMobile) {
   window.addEventListener('deviceorientation', (event) => {
@@ -212,8 +213,10 @@ function animate() {
     cube.velocity.z = 0.045;
   }
 
-  if (Math.abs(tiltX) > 2) { // Sensibilidade
-    cube.velocity.x = Math.sign(tiltX) * 0.045;
+  // Movimento baseado em orientação (só para dispositivos móveis)
+  if (isMobile) {
+    if (Math.abs(tiltX) > 2) { // Sensibilidade para o eixo X (esquerda/direita)
+      cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
 
     const adjustedTiltY = tiltY - 35; 
@@ -221,6 +224,7 @@ function animate() {
     if (Math.abs(adjustedTiltY) > 33) { // Sensibilidade para o eixo Z (frente/trás)
       cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
     }
+  }
 
   cube.update(ground);
 }
