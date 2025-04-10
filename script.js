@@ -220,9 +220,11 @@ function animate() {
 
     const adjustedTiltY = tiltY - 35; 
 
-    if (Math.abs(adjustedTiltYtiltY) > 5) { // Sensibilidade para o eixo Z (frente/trás)
-      cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
-    }
+    if (Math.abs(adjustedTiltY) > 5) {  // Sensibilidade para o eixo Z (frente/trás)
+        cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
+      } else {
+        cube.velocity.z = 0;  // Se a inclinação no eixo Z não for suficiente, o cubo para
+      }
   }
 
   cube.update(ground);
