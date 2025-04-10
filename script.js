@@ -16,7 +16,7 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const renderer = new THREE.WebGLRenderer();
-renderer.physicallyCorrectLights = true;
+renderer.physicallyCorrectLights = true; // Para iluminação realista
 renderer.shadowMap.enabled = true;   
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -47,18 +47,18 @@ class Box extends THREE.Mesh {
         this.bottom = this.position.y - this.height / 2;
         this.top = this.position.y + this.height / 2;
 
-        this.position.x += this.velocity.x;
-        this.position.z += this.velocity.z;
-        this.applyGravity();
+        this.position.x += this.velocity.x;     //x axis movement
+        this.position.z += this.velocity.z;     //z axis movement
+        this.applyGravity();                    //speed of gravity
     }
 
     applyGravity() {                     
-        this.velocity.y += this.gravity;
+        this.velocity.y += this.gravity; //gravity
 
-        if(this.bottom + this.velocity.y <= ground.top) {
-            this.velocity.y *= 0.8;
+        if(this.bottom + this.velocity.y <= ground.top) {   //monnitor ground collision
+            this.velocity.y *= 0.8; //bounce friction
             this.velocity.y = -this.velocity.y;        
-        } else {
+        }else{
             this.position.y += this.velocity.y;
         }
     }
@@ -76,16 +76,23 @@ scene.add(ground);
 
 //Light
 const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(3, 4, -3);
+light.position.x = 3;
+light.position.y = 4;
+light.position.z = -3;
 light.castShadow = true;
 scene.add(light);
 
+// Configurar o shadow camera da luz direcional
 light.shadow.camera.left = -15;
 light.shadow.camera.right = 15;
 light.shadow.camera.top = 15;
 light.shadow.camera.bottom = -15;
+
+// Aumentar a resolução do mapa de sombras para melhorar a qualidade
 light.shadow.mapSize.width = 4096;
 light.shadow.mapSize.height = 4096;
+
+// Ajustar a distância máxima para calcular sombras
 light.shadow.camera.near = 0.1;
 light.shadow.camera.far = 100;
 
@@ -107,14 +114,24 @@ sun.set(light.position.x, light.position.y, light.position.z);
 skyUniforms['sunPosition'].value.copy(sun);
 
 //Camera position
-camera.position.set(5, 2, 10);
+camera.position.z = 10;
+camera.position.x = 5;
+camera.position.y = 2;
 camera.lookAt(cube.position);
 
 const keys = {
-    a: { pressed: false },
-    d: { pressed: false },
-    w: { pressed: false },
-    s: { pressed: false }
+    a: {
+        pressed: false
+    },
+    d: {
+        pressed: false
+    },
+    w: {
+        pressed: false
+    },
+    s: {
+        pressed: false
+    }
 }
 
 window.addEventListener('keydown', (event) => {
@@ -123,20 +140,23 @@ window.addEventListener('keydown', (event) => {
         case 'ArrowUp': 
             keys.w.pressed = true;
             break;
+
         case 'KeyA': 
         case 'ArrowLeft':
             keys.a.pressed = true;
             break;
+
         case 'KeyD': 
         case 'ArrowRight':
             keys.d.pressed = true;
             break;
+        
         case 'KeyS':
         case 'ArrowDown':
             keys.s.pressed = true;
             break;
     }
-});
+})
 
 window.addEventListener('keyup', (event) => {
     switch (event.code) {
@@ -144,70 +164,58 @@ window.addEventListener('keyup', (event) => {
         case 'ArrowUp': 
             keys.w.pressed = false;
             break;
+
         case 'KeyA': 
         case 'ArrowLeft':
             keys.a.pressed = false;
             break;
+
         case 'KeyD': 
         case 'ArrowRight':
             keys.d.pressed = false;
             break;
+
         case 'KeyS':
         case 'ArrowDown':
             keys.s.pressed = false;
             break;
     }
-});
+})
 
-// Variáveis para armazenar a inclinação do dispositivo
 let tiltX = 0;
-let tiltY = 0;
-let tiltOffsetX = 0; // Offset inicial para o eixo X
-let tiltOffsetY = 0; // Offset inicial para o eixo Y
+let tiltY = 30;
 
-// Adicionar evento para capturar a orientação do dispositivo
 window.addEventListener('deviceorientation', (event) => {
-    tiltX = event.gamma; // Inclinação no eixo X (esquerda/direita)
-    tiltY = event.beta;  // Inclinação no eixo Y (frente/trás)
-
-    // Configurar os offsets iniciais na primeira execução
-    if (tiltOffsetX === 0 && tiltOffsetY === 0) {
-        tiltOffsetX = tiltX;
-        tiltOffsetY = tiltY;
-    }
-});
-
-// Selecionar o botão de reset
-const resetTiltBtn = document.getElementById('resetTiltBtn');
-
-// Evento para redefinir o tilt
-resetTiltBtn.addEventListener('click', () => {
-    tiltOffsetX = tiltX; // Redefinir o offset X para o valor atual
-    tiltOffsetY = tiltY; // Redefinir o offset Y para o valor atual
-    console.log('Tilt resetado:', { tiltOffsetX, tiltOffsetY });
+    tiltX = event.gamma; 
+    tiltY = event.beta; 
 });
 
 function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
 
-    cube.velocity.x = 0;
-    cube.velocity.z = 0;
+  //Movement code
+  cube.velocity.x = 0;      //Reset velocity
+  cube.velocity.z = 0;      
+  if (keys.a.pressed) {
+    cube.velocity.x -= 0.045;
+  } else if (keys.d.pressed) {
+    cube.velocity.x = 0.045;
+  }
+  
+  if (keys.w.pressed) {
+    cube.velocity.z = -0.045;
+  } else if (keys.s.pressed) {
+    cube.velocity.z = 0.045;
+  }
 
-    if (keys.a.pressed) cube.velocity.x -= 0.045;
-    else if (keys.d.pressed) cube.velocity.x = 0.045;
-
-    if (keys.w.pressed) cube.velocity.z = -0.045;
-    else if (keys.s.pressed) cube.velocity.z = 0.045;
-
-    // Controles baseados na inclinação do dispositivo
-    if (Math.abs(tiltX - tiltOffsetX) > 5) { // Sensibilidade no eixo X
-        cube.velocity.x = Math.sign(tiltX - tiltOffsetX) * 0.045;
+  if (Math.abs(tiltX) > 5) { // Sensibilidade
+    cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
-    if (Math.abs(tiltY - tiltOffsetY) > 5) { // Sensibilidade no eixo Y
-        cube.velocity.z = Math.sign(tiltY - tiltOffsetY) * 0.045;
-    }
+  if (Math.abs(tiltY) > 5) {
+    cube.velocity.z = Math.sign(tiltY) * 0.045;
+  }
 
-    cube.update(ground);
+  cube.update(ground);
 }
 animate();
