@@ -185,10 +185,25 @@ window.addEventListener('keyup', (event) => {
 let tiltX = 0;
 let tiltY = 0;
 
-window.addEventListener('deviceorientation', (event) => {
-    tiltX = event.gamma; 
-    tiltY = event.beta; 
-});
+function handleDeviceOrientation(event) {
+    tiltX = event.gamma || 0; // Inclinação no eixo X
+    tiltY = event.beta || 0;  // Inclinação no eixo Y
+}
+
+// Solicitar permissão para sensores (necessário no iOS)
+if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission()
+        .then((response) => {
+            if (response === 'granted') {
+                window.addEventListener('deviceorientation', handleDeviceOrientation);
+            } else {
+                console.error('Permissão para sensores negada.');
+            }
+        })
+        .catch(console.error);
+} else {
+    window.addEventListener('deviceorientation', handleDeviceOrientation);
+}
 
 function animate() {
   requestAnimationFrame(animate);
@@ -210,10 +225,10 @@ function animate() {
   }
 
   if (Math.abs(tiltX) > 5) { // Sensibilidade
-    cube.velocity.x += tiltX * 0.001;
+    cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
   if (Math.abs(tiltY) > 5) {
-    cube.velocity.z += tiltY * 0.001;
+    cube.velocity.z = Math.sign(tiltY) * 0.045;
   }
 
   cube.update(ground);
