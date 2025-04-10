@@ -22,9 +22,10 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 
 // Variáveis do score
-let score = 0;                            // <-- Adicionado
-let scoreInterval;                       // <-- Adicionado
-let gameRunning = true;                  // <-- Adicionado
+let score = 0;                            
+let scoreInterval;                       
+let gameRunning = true;                  
+
 
 class Box extends THREE.Mesh {
   constructor({width, height, depth, color = '#00ff00', velocity = {x: 0, y: 0, z: 0}, position = {x: 0, y: 0, z: 0}, zAcceleration = false}) {
@@ -259,8 +260,11 @@ function animate() {
     if (spawnRate > 20) spawnRate -= 10;
     const enemy = new Box({
       width: 1, height: 1, depth: 1,
-      position: { x: (Math.random() - 0.5) * 5, y: 0, z: (ground.back + cube.depth / 2) - 1 },
-      velocity: { x: 0, y: 0, z: 0.005 },
+      position: {
+        x: (Math.random() * (ground.right - ground.left)) + ground.left, // Posição aleatória no eixo X
+        y: 0,
+        z: ground.back + cube.depth / 2 - 1 // Posição na ponta de trás do ground
+      },      velocity: { x: 0, y: 0, z: 0.005 },
       color: 'red',
       zAcceleration: true
     });
