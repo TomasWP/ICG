@@ -220,7 +220,7 @@ function animate() {
 
     const adjustedTiltY = tiltY - 35; 
 
-    if (Math.abs(tiltY) > 5) { // Sensibilidade para o eixo Z (frente/trás)
+    if (Math.abs(adjustedTiltYtiltY) > 5) { // Sensibilidade para o eixo Z (frente/trás)
       cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
     }
   }
