@@ -215,15 +215,15 @@ function animate() {
   // Movimento baseado em orientação (só para dispositivos móveis)
   if (isMobile) {
     if (Math.abs(tiltX) > 3) {  // Sensibilidade para o eixo X (esquerda/direita)
-        cube.velocity.x = Math.sign(tiltX) * 0.045;
+        cube.velocity.x = Math.sign(tiltX) * 0.05;
       } else {
         cube.velocity.x = 0;  
       }
     
-      const adjustedTiltY = tiltY - 25; 
+      const adjustedTiltY = tiltY - 30; 
     
       if (Math.abs(adjustedTiltY) > 3) {  // Sensibilidade para o eixo Z (frente/trás)
-        cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
+        cube.velocity.z = Math.sign(adjustedTiltY) * 0.05;
       } else {
         cube.velocity.z = 0;  
       }
