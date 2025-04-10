@@ -212,7 +212,7 @@ function animate() {
   if (Math.abs(tiltX) > 5) { // Sensibilidade
     cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
-  if (tiltY < -30 || tiltY > 30) { // Sensibilidade
+  if (tiltY < -35 || tiltY > -35) { // Sensibilidade
     cube.velocity.z = Math.sign(tiltY) * 0.045;
   }
 
