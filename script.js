@@ -182,6 +182,17 @@ window.addEventListener('keyup', (event) => {
     }
 })
 
+// Variáveis para armazenar a inclinação do dispositivo
+let tiltX = 0; // Inclinação no eixo X (esquerda/direita)
+let tiltY = 0; // Inclinação no eixo Y (frente/trás)
+
+// Adicionar evento para capturar a orientação do dispositivo
+window.addEventListener('deviceorientation', (event) => {
+    // Capturar os valores de inclinação
+    tiltX = event.gamma; // Inclinação no eixo X (esquerda/direita)
+    tiltY = event.beta;  // Inclinação no eixo Y (frente/trás)
+});
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -200,6 +211,14 @@ function animate() {
   } else if (keys.s.pressed) {
     cube.velocity.z = 0.045;
   }
+
+    // Controles baseados na inclinação do dispositivo
+    if (Math.abs(tiltX) > 5) { // Sensibilidade no eixo X
+        cube.velocity.x = Math.sign(tiltX) * 0.045; // Direção baseada na inclinação
+      }
+      if (Math.abs(tiltY) > 5) { // Sensibilidade no eixo Y
+        cube.velocity.z = Math.sign(tiltY) * 0.045; // Direção baseada na inclinação
+      }
 
   cube.update(ground);
 }
