@@ -55,10 +55,10 @@ class Box extends THREE.Mesh {
     applyGravity() {                     
         this.velocity.y += this.gravity; //gravity
 
-        if (this.bottom + this.velocity.y <= ground.top) {
-            this.velocity.y = 0;
-            this.position.y = ground.top + this.height / 2; // posiciona em cima do chão
-        } else {
+        if(this.bottom + this.velocity.y <= ground.top) {   //monnitor ground collision
+            this.velocity.y *= 0.8; //bounce friction
+            this.velocity.y = -this.velocity.y;        
+        }else{
             this.position.y += this.velocity.y;
         }
     }
@@ -182,21 +182,13 @@ window.addEventListener('keyup', (event) => {
     }
 })
 
-let neutralTiltX = null;
-let neutralTiltY = null;
+let tiltX = 0;
+let tiltY = 0;
 
 window.addEventListener('deviceorientation', (event) => {
-    // Se ainda não calibrado, guardar como neutro
-    if (neutralTiltX === null || neutralTiltY === null) {
-        neutralTiltX = event.gamma;
-        neutralTiltY = event.beta;
-    }
-
-    // Aplicar correção
-    tiltX = event.gamma - neutralTiltX;
-    tiltY = event.beta - neutralTiltY;
+    tiltX = event.gamma; 
+    tiltY = event.beta; 
 });
-
 
 function animate() {
   requestAnimationFrame(animate);
@@ -220,7 +212,7 @@ function animate() {
   if (Math.abs(tiltX) > 5) { // Sensibilidade
     cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
-  if (Math.abs(tiltY) > 5) {
+  if (tiltY < -30 || tiltY > 30) { // Sensibilidade
     cube.velocity.z = Math.sign(tiltY) * 0.045;
   }
 
