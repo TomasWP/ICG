@@ -1,6 +1,8 @@
 // TODO: Full collision detection
 // TODO: Enemy spawning
 // TODO: End game scenario
+// TODO: Replace cube and obstacle with 3D models
+
 await import('https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js');    
 
 import * as THREE from 'https://unpkg.com/three@0.150.1/build/three.module.js';
@@ -64,15 +66,17 @@ class Box extends THREE.Mesh {
     }
 }
 
+//Ground
+const ground = new Box({width: 7, height: 0.5, depth: 20, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
+ground.receiveShadow = true;
+scene.add(ground);
+
 //Cube
 const cube = new Box({width: 1, height: 1, depth: 1, velocity: {x: 0, y: -0.01, z: 0}});
 cube.castShadow = true;
+cube.position.z = ground.depth-11//position cube in front of ground
 scene.add(cube);
 
-//Ground
-const ground = new Box({width: 7, height: 0.5, depth: 15, color: '#ff8c00', position: {x: 0, y: -2, z: 0}});
-ground.receiveShadow = true;
-scene.add(ground);
 
 //Light
 const light = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -114,9 +118,9 @@ sun.set(light.position.x, light.position.y, light.position.z);
 skyUniforms['sunPosition'].value.copy(sun);
 
 //Camera position
-camera.position.z = 10;
-camera.position.x = 5;
-camera.position.y = 2;
+camera.position.z = 12.7;
+camera.position.x = 0;
+camera.position.y = 1.5;
 camera.lookAt(cube.position);
 
 const keys = {
