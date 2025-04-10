@@ -232,11 +232,11 @@ function animate() {
   }
 
     // Controles baseados na inclinação do dispositivo
-    if (Math.abs(tiltX) > 5) { // Sensibilidade para o eixo X
-        cube.velocity.x += (tiltX - tiltOffsetX) * 0.001; // Ajustar a velocidade com base na inclinação
+    if (Math.abs(tiltX - tiltOffsetX) > 5) { // Sensibilidade para o eixo X
+        cube.velocity.x = Math.sign(tiltX - tiltOffsetX) * 0.045; // Velocidade fixa baseada na direção
     }
-    if (Math.abs(tiltY) > 5) { // Sensibilidade para o eixo Y
-        cube.velocity.z += (tiltY - tiltOffsetY) * 0.001; // Ajustar a velocidade com base na inclinação
+    if (Math.abs(tiltY - tiltOffsetY) > 5) { // Sensibilidade para o eixo Y
+        cube.velocity.z = Math.sign(tiltY - tiltOffsetY) * 0.045; // Velocidade fixa baseada na direção
     }
 
   cube.update(ground);
