@@ -213,16 +213,16 @@ function animate() {
   }
 
   // Movimento baseado em orientação (só para dispositivos móveis)
-  if (isMobile) {
+
     if (Math.abs(tiltX) > 2) { // Sensibilidade para o eixo X (esquerda/direita)
       cube.velocity.x = Math.sign(tiltX) * 0.045;
     }
 
     const adjustedTiltY = tiltY - 35; 
 
-    if (Math.abs(adjustedTiltY) > 5) { // Sensibilidade para o eixo Z (frente/trás)
+    if (Math.abs(adjustedTiltY) > 33) { // Sensibilidade para o eixo Z (frente/trás)
       cube.velocity.z = Math.sign(adjustedTiltY) * 0.045;
-    }
+
   }
 
   cube.update(ground);
