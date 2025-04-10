@@ -97,7 +97,7 @@ light.shadow.camera.near = 0.1;
 light.shadow.camera.far = 100;
 
 //Ambient Light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
 scene.add(ambientLight);
 
 //Sky
