@@ -183,11 +183,11 @@ window.addEventListener('keyup', (event) => {
 })
 
 let tiltX = 0;
-let tiltY = 30;
+let tiltY = 0;
 
 window.addEventListener('deviceorientation', (event) => {
     tiltX = event.gamma; 
-    tiltY = event.beta; 
+    tiltY = event.beta+30; 
 });
 
 function animate() {
