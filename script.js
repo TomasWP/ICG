@@ -185,11 +185,14 @@ window.addEventListener('keyup', (event) => {
 let tiltX = 0;
 let tiltY = 0;
 
-window.addEventListener('deviceorientation', (event) => {
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); // Verifica se é um dispositivo móvel
+
+if (isMobile) {
+  window.addEventListener('deviceorientation', (event) => {
     tiltX = event.gamma; 
     tiltY = event.beta; 
-});
-
+  });
+}
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
