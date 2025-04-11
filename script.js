@@ -61,7 +61,7 @@ class Box extends THREE.Mesh {
     this.updateSides();
 
     if (this.zAcceleration) {
-      this.velocity.z += 0.0003;
+      this.velocity.z += 0.0004;
     }
 
     this.bottom = this.position.y - this.height / 2;
@@ -102,7 +102,7 @@ scene.add(ground);
 
 const cube = new Box({ width: 1, height: 1, depth: 1, velocity: { x: 0, y: -0.01, z: 0 } });
 cube.castShadow = true;
-cube.position.z = -(ground.back + cube.depth / 2) - 1;
+cube.position.z = -(ground.back + cube.depth / 2) - 2;
 scene.add(cube);
 
 const light = new THREE.DirectionalLight(0xffffff, 2.5);
@@ -110,12 +110,12 @@ light.position.set(2, 4, 5);
 light.castShadow = true;
 scene.add(light);
 
-light.shadow.camera.left = -15;
-light.shadow.camera.right = 15;
-light.shadow.camera.top = 15;
-light.shadow.camera.bottom = -15;
+light.shadow.camera.left = -20;
+light.shadow.camera.right = 20;
+light.shadow.camera.top = 20;
+light.shadow.camera.bottom = -20;
 light.shadow.mapSize.set(4096, 4096);
-light.shadow.camera.near = 0.1;
+light.shadow.camera.near = -5;
 light.shadow.camera.far = 100;
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
@@ -214,7 +214,7 @@ if (isMobile) {
 
 const enemies = [];
 let frames = 0;
-let spawnRate = 200;
+let spawnRate = 250;
 
 function endGame(message) {
   gameRunning = false;
@@ -277,21 +277,22 @@ function animate() {
   });
 
   if (frames % spawnRate === 0) {
-    if (spawnRate > 20) spawnRate -= 8;
-    const enemy = new Box({
-      width: 1, height: 1, depth: 1,
-      position: {
-        x: (Math.random() * (ground.right - ground.left)) + ground.left,
-        y: 0,
-        z: ground.back + cube.depth / 2 - 1
-      },
-      velocity: { x: 0, y: 0, z: 0.005 },
-      color: 'red',
-      zAcceleration: true
-    });
-    enemy.castShadow = true;
-    scene.add(enemy);
-    enemies.push(enemy);
+    if (spawnRate > 10)
+      spawnRate -= 6;
+      const enemy = new Box({
+        width: 1, height: 1, depth: 1,
+        position: {
+          x: (Math.random() * (ground.right - ground.left)) + ground.left,
+          y: 0,
+          z: ground.back + cube.depth / 2 - 1
+        },
+        velocity: { x: 0, y: 0, z: 0.005 },
+        color: 'red',
+        zAcceleration: true
+      });
+      enemy.castShadow = true;
+      scene.add(enemy);
+      enemies.push(enemy);
   }
 
   frames++;
