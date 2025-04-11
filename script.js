@@ -21,11 +21,9 @@ document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
-// Variáveis do score
-let score = 0;                            
-let scoreInterval;                       
-let gameRunning = true;                  
-
+let score = 0;
+let scoreInterval;
+let gameRunning = true;
 
 class Box extends THREE.Mesh {
   constructor({width, height, depth, color = '#00ff00', velocity = {x: 0, y: 0, z: 0}, position = {x: 0, y: 0, z: 0}, zAcceleration = false}) {
@@ -49,6 +47,7 @@ class Box extends THREE.Mesh {
     this.velocity = velocity;
     this.gravity = -0.002;
     this.zAcceleration = zAcceleration;
+    this.canJump = false;
   }
 
   updateSides() {
@@ -80,6 +79,7 @@ class Box extends THREE.Mesh {
     const friction = 0.5;
 
     if (boxColision({ box1: this, box2: ground })) {
+      this.canJump = true;
       this.velocity.y *= friction;
       this.velocity.y = -this.velocity.y;
     } else {
@@ -96,18 +96,15 @@ function boxColision({ box1, box2 }) {
   return zCollission && yCollission && xCollission;
 }
 
-// Ground
 const ground = new Box({ width: 10, height: 0.5, depth: 30, color: '#ff8c00', position: { x: 0, y: -2, z: 0 } });
 ground.receiveShadow = true;
 scene.add(ground);
 
-// Cube
 const cube = new Box({ width: 1, height: 1, depth: 1, velocity: { x: 0, y: -0.01, z: 0 } });
 cube.castShadow = true;
 cube.position.z = -(ground.back + cube.depth / 2) - 1;
 scene.add(cube);
 
-// Luz
 const light = new THREE.DirectionalLight(0xffffff, 2.5);
 light.position.set(2, 4, 5);
 light.castShadow = true;
@@ -134,7 +131,6 @@ skyUniforms['mieCoefficient'].value = 0.005;
 skyUniforms['mieDirectionalG'].value = 0.8;
 skyUniforms['sunPosition'].value.copy(light.position);
 
-// Câmera
 camera.position.set(0, ground.height * 6, ground.depth * 0.32 + 10);
 camera.lookAt(ground.position);
 
@@ -164,7 +160,10 @@ window.addEventListener('keydown', (event) => {
       keys.s.pressed = true;
       break;
     case 'Space':
-      cube.velocity.y = 0.1;
+      if (cube.canJump) {
+        cube.velocity.y = 0.1;
+        cube.canJump = false;
+      }
       break;
   }
 });
@@ -187,6 +186,12 @@ window.addEventListener('keyup', (event) => {
     case 'ArrowDown':
       keys.s.pressed = false;
       break;
+    case 'Space':
+      if (cube.canJump) {
+        cube.velocity.y = 0.1;
+        cube.canJump = false;
+      }
+      break;
   }
 });
 
@@ -198,6 +203,13 @@ if (isMobile) {
     tiltX = event.gamma;
     tiltY = event.beta;
   });
+
+  window.addEventListener('touchstart', () => {
+    if (cube.canJump) {
+      cube.velocity.y = 0.1;
+      cube.canJump = false;
+    }
+  });
 }
 
 const enemies = [];
@@ -205,19 +217,31 @@ let frames = 0;
 let spawnRate = 200;
 
 function endGame(message) {
-  gameRunning = false;                       // <-- Adicionado
-  clearInterval(scoreInterval);             // <-- Adicionado
-  alert(`${message}\nFinal Score: ${score}`);  // <-- Adicionado
+  gameRunning = false;
+  clearInterval(scoreInterval);
+
+  // Save score
+  const scores = JSON.parse(localStorage.getItem('cubeRunnerScores') || '[]');
+  scores.push(score);
+  scores.sort((a, b) => b - a); // Highest to lowest
+  const top10 = scores.slice(0, 10);
+  localStorage.setItem('cubeRunnerScores', JSON.stringify(top10));
+
+  alert(`${message}\nFinal Score: ${score}`);
   window.location.reload();
 }
 
-function animate() {
 
+function animate() {
   const helpBtn = document.getElementById('help-button');
   const tooltip = document.getElementById('help-tooltip');
-
-  helpBtn.addEventListener('hover', () => {
-    tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+  
+  helpBtn.addEventListener('mouseenter', () => {
+    tooltip.style.display = 'block'; 
+  });
+  
+  helpBtn.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none'; 
   });
 
   const animationID = requestAnimationFrame(animate);
@@ -234,10 +258,6 @@ function animate() {
     if (Math.abs(tiltX) > 3) cube.velocity.x = Math.sign(tiltX) * 0.05;
     const adjustedTiltY = tiltY - 30;
     if (Math.abs(adjustedTiltY) > 3) cube.velocity.z = Math.sign(adjustedTiltY) * 0.08;
-
-    window.addEventListener('touchstart', () => {
-        cube.velocity.y = 0.1;
-    });
   }
 
   cube.update(ground);
@@ -257,14 +277,15 @@ function animate() {
   });
 
   if (frames % spawnRate === 0) {
-    if (spawnRate > 20) spawnRate -= 10;
+    if (spawnRate > 20) spawnRate -= 8;
     const enemy = new Box({
       width: 1, height: 1, depth: 1,
       position: {
-        x: (Math.random() * (ground.right - ground.left)) + ground.left, // Posição aleatória no eixo X
+        x: (Math.random() * (ground.right - ground.left)) + ground.left,
         y: 0,
-        z: ground.back + cube.depth / 2 - 1 // Posição na ponta de trás do ground
-      },      velocity: { x: 0, y: 0, z: 0.005 },
+        z: ground.back + cube.depth / 2 - 1
+      },
+      velocity: { x: 0, y: 0, z: 0.005 },
       color: 'red',
       zAcceleration: true
     });
@@ -278,10 +299,34 @@ function animate() {
 
 animate();
 
-// Score counting
 scoreInterval = setInterval(() => {
   if (gameRunning) {
     score++;
     document.getElementById('score').textContent = `Score: ${score}`;
   }
 }, 1000);
+
+const scoreboardButton = document.getElementById('scoreboard-button');
+const scoreboardPopup = document.getElementById('scoreboard-popup');
+const scoreList = document.getElementById('score-list');
+
+scoreboardButton.addEventListener('mouseenter', () => {
+  const scores = JSON.parse(localStorage.getItem('cubeRunnerScores') || '[]');
+
+  scoreList.innerHTML = '';
+  scores.forEach((s, i) => {
+    const item = document.createElement('li');
+    item.textContent = `#${i + 1} - ${s} pts`;
+    scoreList.appendChild(item);
+  });
+
+  scoreboardPopup.style.display = 'block';
+});
+
+scoreboardButton.addEventListener('mouseleave', () => {
+  scoreboardPopup.style.display = 'none';
+});
+
+scoreboardPopup.addEventListener('mouseleave', () => {
+  scoreboardPopup.style.display = 'none';
+});

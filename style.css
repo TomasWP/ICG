@@ -1,0 +1,98 @@
+body {
+    margin: 0;
+    overflow: hidden;
+  }
+
+  #score {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 32px;
+    color: white;
+    font-family: Arial, sans-serif;
+    z-index: 1;
+  }
+
+  #help-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #555;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    text-align: center;
+    line-height: 40px;
+    z-index: 2;
+  }
+
+  #help-tooltip {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    max-width: 250px;
+    z-index: 3;
+    display: none;
+  }
+
+  #help-button:hover + #help-tooltip {
+    display: block;
+  }
+
+  #scoreboard-button {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #555;
+    color: white;
+    font-size: 20px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  #scoreboard-popup {
+    position: absolute;
+    top: 120px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    max-width: 250px;
+    z-index: 2;
+    display: none;
+  }
+
+  #scoreboard-popup ol {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  #score-list {
+    list-style-type: none;
+    padding-left: 0; 
+  }
+
+  @media (hover: none) {
+    #help-button:hover + #help-tooltip {
+      display: none;
+    }
+  }

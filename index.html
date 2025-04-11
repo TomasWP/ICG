@@ -4,66 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cube Runner</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
+  <link rel="stylesheet" href="style.css" />
 
-    #score {
-      position: absolute;
-      top: 20px;
-      width: 100%;
-      text-align: center;
-      font-size: 32px;
-      color: white;
-      font-family: Arial, sans-serif;
-      z-index: 1;
-    }
-
-    #help-button {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 40px;
-      height: 40px;
-      background-color: #888;
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      text-align: center;
-      line-height: 40px;
-      z-index: 2;
-    }
-
-    #help-tooltip {
-      position: absolute;
-      top: 70px;
-      right: 20px;
-      background-color: rgba(0,0,0,0.8);
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      max-width: 250px;
-      z-index: 2;
-      display: none;
-    }
-
-    #help-button:hover + #help-tooltip {
-      display: block;
-    }
-
-    @media (hover: none) {
-      #help-button:hover + #help-tooltip {
-        display: none;
-      }
-    }
-  </style>
   <script
     async
     src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
@@ -90,6 +32,12 @@
     • Inclinar o dispositivo para mover<br>
     • Tocar no ecrã para saltar
   </div>
+
+  <button id="scoreboard-button">🏆</button>
+  <div id="scoreboard-popup">
+    <strong>Top 10 Scores</strong>
+    <ol id="score-list"></ol>
+  </div>  
 
   <script type="module" src="./script.js"></script>
 </body>
