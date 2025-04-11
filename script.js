@@ -115,7 +115,7 @@ light.shadow.camera.right = 20;
 light.shadow.camera.top = 20;
 light.shadow.camera.bottom = -20;
 light.shadow.mapSize.set(4096, 4096);
-light.shadow.camera.near = -5;
+light.shadow.camera.near = -15;
 light.shadow.camera.far = 100;
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
@@ -212,10 +212,6 @@ if (isMobile) {
   });
 }
 
-const enemies = [];
-let frames = 0;
-let spawnRate = 250;
-
 function endGame(message) {
   gameRunning = false;
   clearInterval(scoreInterval);
@@ -231,20 +227,54 @@ function endGame(message) {
   window.location.reload();
 }
 
+let isPaused = false; 
+const pauseMenu = document.getElementById('pause-menu');
+const resumeButton = document.getElementById('resume-button');
+
+function pauseGame() {
+  isPaused = true;
+  pauseMenu.style.display = 'flex'; 
+  cancelAnimationFrame(animationID); 
+}
+
+function resumeGame() {
+  isPaused = false;
+  pauseMenu.style.display = 'none'; 
+  animate(); 
+}
+
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pauseGame(); 
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.code === 'Escape') {
+    if (!isPaused) {
+      pauseGame(); 
+    } else {
+      resumeGame();
+    }
+  }
+});
+
+
+resumeButton.addEventListener('click', () => {
+  resumeGame(); 
+});
+
+const enemies = [];
+let frames = 0;
+let spawnRate = 200;
+let animationID;
+let enemySpeed = 0.005; 
 
 function animate() {
-  const helpBtn = document.getElementById('help-button');
-  const tooltip = document.getElementById('help-tooltip');
-  
-  helpBtn.addEventListener('mouseenter', () => {
-    tooltip.style.display = 'block'; 
-  });
-  
-  helpBtn.addEventListener('mouseleave', () => {
-    tooltip.style.display = 'none'; 
-  });
+  if (isPaused) return; 
 
-  const animationID = requestAnimationFrame(animate);
+  animationID = requestAnimationFrame(animate);
   renderer.render(scene, camera);
 
   cube.velocity.x = 0;
@@ -277,22 +307,23 @@ function animate() {
   });
 
   if (frames % spawnRate === 0) {
-    if (spawnRate > 10)
-      spawnRate -= 6;
-      const enemy = new Box({
-        width: 1, height: 1, depth: 1,
-        position: {
-          x: (Math.random() * (ground.right - ground.left)) + ground.left,
-          y: 0,
-          z: ground.back + cube.depth / 2 - 1
-        },
-        velocity: { x: 0, y: 0, z: 0.005 },
-        color: 'red',
-        zAcceleration: true
-      });
-      enemy.castShadow = true;
-      scene.add(enemy);
-      enemies.push(enemy);
+    if (spawnRate > 10) spawnRate -= 5;
+    const enemy = new Box({
+      width: 1, height: 1, depth: 1,
+      position: {
+        x: (Math.random() * (ground.right - ground.left)) + ground.left,
+        y: 0,
+        z: ground.back + cube.depth / 2 - 1
+      },
+      velocity: { x: 0, y: 0, z: enemySpeed },
+      color: 'red',
+      zAcceleration: true
+    });
+
+    enemy.castShadow = true;
+    scene.add(enemy);
+    enemies.push(enemy);
+    enemySpeed += 0.0001; // Incremento gradual na velocidade
   }
 
   frames++;
@@ -301,7 +332,7 @@ function animate() {
 animate();
 
 scoreInterval = setInterval(() => {
-  if (gameRunning) {
+  if (gameRunning && !isPaused) {
     score++;
     document.getElementById('score').textContent = `Score: ${score}`;
   }
