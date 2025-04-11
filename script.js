@@ -96,7 +96,23 @@ function boxColision({ box1, box2 }) {
   return zCollission && yCollission && xCollission;
 }
 
-const ground = new Box({ width: 10, height: 0.5, depth: 30, color: '#ff8c00', position: { x: 0, y: -2, z: 0 } });
+const textureLoader = new THREE.TextureLoader();
+const roadTexture = textureLoader.load('/assets/rode.jpg'); 
+
+roadTexture.wrapS = THREE.RepeatWrapping;
+roadTexture.wrapT = THREE.RepeatWrapping;
+
+const groundMaterial = new THREE.MeshStandardMaterial({ map: roadTexture });
+
+
+const ground = new Box({ 
+  width: 14, 
+  height: 0.5, 
+  depth: 40, 
+  color: '#ffffff', 
+  position: { x: 0, y: -2, z: 0 }
+});
+ground.material = groundMaterial;
 ground.receiveShadow = true;
 scene.add(ground);
 
@@ -267,7 +283,7 @@ resumeButton.addEventListener('click', () => {
 
 const enemies = [];
 let frames = 0;
-let spawnRate = 200;
+let spawnRate = 250;
 let animationID;
 let enemySpeed = 0.005; 
 
@@ -307,7 +323,7 @@ function animate() {
   });
 
   if (frames % spawnRate === 0) {
-    if (spawnRate > 10) spawnRate -= 5;
+    if (spawnRate > 25) spawnRate = spawnRate- 10;
     const enemy = new Box({
       width: 1, height: 1, depth: 1,
       position: {
@@ -323,7 +339,7 @@ function animate() {
     enemy.castShadow = true;
     scene.add(enemy);
     enemies.push(enemy);
-    enemySpeed += 0.0001; // Incremento gradual na velocidade
+    enemySpeed += 0.0001; // Incremento gradual da velocidade
   }
 
   frames++;
