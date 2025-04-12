@@ -3,6 +3,25 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+import { getDatabase, ref, push, set, get, child } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js';
+import { onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDVggvE4QGrIgoiHxoPYTwpxWfVcdysJag",
+  authDomain: "cube-runner-44bd6.firebaseapp.com",
+  databaseURL: "https://cube-runner-44bd6-default-rtdb.firebaseio.com",
+  projectId: "cube-runner-44bd6",
+  storageBucket: "cube-runner-44bd6.firebasestorage.app",
+  messagingSenderId: "625315392244",
+  appId: "1:625315392244:web:038d9dbfcbfde5854b8ca1",
+  measurementId: "G-BQNW7D8FCQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const scoresRef = ref(db, 'scores');
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -232,15 +251,33 @@ function endGame(message) {
   gameRunning = false;
   clearInterval(scoreInterval);
 
-  // Save score
-  const scores = JSON.parse(localStorage.getItem('cubeRunnerScores') || '[]');
-  scores.push(score);
-  scores.sort((a, b) => b - a); // Highest to lowest
-  const top10 = scores.slice(0, 10);
-  localStorage.setItem('cubeRunnerScores', JSON.stringify(top10));
+  saveScore(score, message);
 
-  alert(`${message}\nFinal Score: ${score}`);
-  window.location.reload();
+  const pauseTitle = document.getElementById('pause-title');
+  const finalScore = document.getElementById('final-score');
+  const resumeButton = document.getElementById('resume-button');
+  const restartButton = document.getElementById('restart-button');
+
+  pauseTitle.textContent = message; 
+  finalScore.textContent = `Score: ${score}`; 
+  finalScore.style.display = 'block'; 
+
+  resumeButton.style.display = 'none';
+  restartButton.style.display = 'block';
+
+  pauseMenu.style.display = 'flex'; 
+  cancelAnimationFrame(animationID); 
+}
+
+function saveScore(score, message) {
+
+  const now = new Date();
+  const options = { timeZone: "Europe/Lisbon", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" };
+  const timestamp = now.toLocaleString("pt-PT", options).replace(/[/]/g, '-').replace(/[:]/g, '-');
+
+  const scoreRef = ref(db, `scores/${timestamp}`); 
+
+  set(scoreRef, score);
 }
 
 let isPaused = false; 
@@ -248,12 +285,24 @@ const pauseMenu = document.getElementById('pause-menu');
 const resumeButton = document.getElementById('resume-button');
 
 function pauseGame() {
+  if (!gameRunning) return; 
+
   isPaused = true;
   pauseMenu.style.display = 'flex'; 
+
+  document.getElementById('resume-button').style.display = 'block';
+  document.getElementById('restart-button').style.display = 'block'; 
+
   cancelAnimationFrame(animationID); 
 }
 
+document.getElementById('restart-button').addEventListener('click', () => {
+  window.location.reload(); 
+});
+
 function resumeGame() {
+  if (!gameRunning) return; 
+
   isPaused = false;
   pauseMenu.style.display = 'none'; 
   animate(); 
@@ -339,7 +388,7 @@ function animate() {
     enemy.castShadow = true;
     scene.add(enemy);
     enemies.push(enemy);
-    enemySpeed += 0.0001; // Incremento gradual da velocidade
+    enemySpeed += 0.0001; 
   }
 
   frames++;
@@ -359,16 +408,28 @@ const scoreboardPopup = document.getElementById('scoreboard-popup');
 const scoreList = document.getElementById('score-list');
 
 scoreboardButton.addEventListener('mouseenter', () => {
-  const scores = JSON.parse(localStorage.getItem('cubeRunnerScores') || '[]');
 
-  scoreList.innerHTML = '';
-  scores.forEach((s, i) => {
-    const item = document.createElement('li');
-    item.textContent = `#${i + 1} - ${s} pts`;
-    scoreList.appendChild(item);
+  onValue(scoresRef, (snapshot) => {
+    const allScores = [];
+    snapshot.forEach(child => {
+      const score = child.val(); 
+      const timestamp = child.key; 
+      allScores.push({ timestamp, score }); 
+    });
+
+    allScores.sort((a, b) => b.score - a.score);
+
+    const top10 = allScores.slice(0, 10);
+
+    scoreList.innerHTML = '';
+    top10.forEach((s, i) => {
+      const item = document.createElement('li');
+      item.textContent = `#${i + 1} - ${s.score} pts`;
+      scoreList.appendChild(item);
+    });
+
+    scoreboardPopup.style.display = 'block';
   });
-
-  scoreboardPopup.style.display = 'block';
 });
 
 scoreboardButton.addEventListener('mouseleave', () => {
