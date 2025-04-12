@@ -357,7 +357,7 @@ function animate() {
 
   cube.update(ground);
 
-  if (cube.bottom <= ground.bottom - 5) {
+  if (cube.bottom < ground.bottom - 5) {
     endGame("Game Over by Fall!");
     cancelAnimationFrame(animationID);
     return;
