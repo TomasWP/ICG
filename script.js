@@ -9,7 +9,7 @@ import { onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-dat
 
 
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "cube-runner-44bd6.firebaseapp.com",
   databaseURL: "https://cube-runner-44bd6-default-rtdb.firebaseio.com",
   projectId: "cube-runner-44bd6",
