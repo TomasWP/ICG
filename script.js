@@ -258,15 +258,35 @@ function endGame(message) {
   const resumeButton = document.getElementById('resume-button');
   const restartButton = document.getElementById('restart-button');
 
-  pauseTitle.textContent = message; 
-  finalScore.textContent = `Score: ${score}`; 
-  finalScore.style.display = 'block'; 
+  let isTop10 = false;
 
-  resumeButton.style.display = 'none';
-  restartButton.style.display = 'block';
+  onValue(scoresRef, (snapshot) => {
+    const allScores = [];
+    snapshot.forEach(child => {
+      const scoreValue = Number(child.val());
+      allScores.push({ timestamp: child.key, score: scoreValue });
+    });
 
-  pauseMenu.style.display = 'flex'; 
-  cancelAnimationFrame(animationID); 
+    const uniqueScores = [...new Set(allScores)];
+
+    uniqueScores.sort((a, b) => b - a);
+
+    const top10 = uniqueScores.slice(0, 10);
+
+    if (top10.length < 10 || score >= top10[top10.length - 1].score) {
+      isTop10 = true;
+    }
+
+    pauseTitle.textContent = message; 
+    finalScore.textContent = `Score: ${score}${isTop10 ? " (Top 10!)" : ""}`; 
+    finalScore.style.display = 'block'; 
+
+    resumeButton.style.display = 'none';
+    restartButton.style.display = 'block';
+
+    pauseMenu.style.display = 'flex'; 
+    cancelAnimationFrame(animationID); 
+  });
 }
 
 function saveScore(score, message) {
@@ -412,19 +432,20 @@ scoreboardButton.addEventListener('mouseenter', () => {
   onValue(scoresRef, (snapshot) => {
     const allScores = [];
     snapshot.forEach(child => {
-      const score = child.val(); 
-      const timestamp = child.key; 
-      allScores.push({ timestamp, score }); 
+      const score = Number(child.val()); 
+      allScores.push(score);
     });
 
-    allScores.sort((a, b) => b.score - a.score);
+    const uniqueScores = [...new Set(allScores)];
 
-    const top10 = allScores.slice(0, 10);
+    uniqueScores.sort((a, b) => b - a);
+
+    const top10 = uniqueScores.slice(0, 10);
 
     scoreList.innerHTML = '';
-    top10.forEach((s, i) => {
+    top10.forEach((score, i) => {
       const item = document.createElement('li');
-      item.textContent = `#${i + 1} - ${s.score} pts`;
+      item.textContent = `#${i + 1} - ${score} pts`;
       scoreList.appendChild(item);
     });
 

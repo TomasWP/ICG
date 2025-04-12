@@ -49,6 +49,7 @@ body {
     z-index: 2001;
     display: none;
     user-select: none;
+    line-height: 1.6;
   }
 
   #help-button:hover + #help-tooltip {
@@ -85,6 +86,8 @@ body {
     z-index: 2001;
     display: none;
     user-select: none;
+    line-height: 1.6;
+    
   }
 
   #scoreboard-popup ol {
