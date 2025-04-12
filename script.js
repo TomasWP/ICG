@@ -388,7 +388,7 @@ function animate() {
     enemy.castShadow = true;
     scene.add(enemy);
     enemies.push(enemy);
-    enemySpeed += 0.0001; 
+    enemySpeed += 0.001; 
   }
 
   frames++;
