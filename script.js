@@ -303,19 +303,17 @@ function getCountryFromCacheOrAPI(callback) {
   } else {
     fetch('https://ipinfo.io/json?token=325c954ece8013') // https://ipinfo.io/json?token=325c954ece8013  https://api.ipgeolocation.io/ipgeo?apiKey=1c03be3b1d0b41f793ca0587f6a1a71f (outras opcoes)
     .then(response => response.json())
-      .then(response => response.json())
-      .then(data => {
-        const country = data.country_name || "Unknown";
-        localStorage.setItem("userCountry", country);
-        callback(country);
-      })
-      .catch(error => {
-        console.error("Erro ao obter localização:", error);
-        callback("Unknown");
-      });
-  }
+    .then(data => {
+      const country = data.country || "Unknown";  // <- ipinfo.io usa "country", não "country_name"
+      localStorage.setItem("userCountry", country);
+      callback(country);
+    })
+    .catch(error => {
+      console.error("Erro ao obter localização:", error);
+      callback("Unknown");
+    });
 }
-
+}
 
 function saveScore(score, message, isTop10) {
   getCountryFromCacheOrAPI((country) => {
