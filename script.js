@@ -295,34 +295,63 @@ function endGame(message) {
   });
 }
 
+function getCountryFromCacheOrAPI(callback) {
+  const cachedCountry = localStorage.getItem("userCountry");
+
+  if (cachedCountry) {
+    callback(cachedCountry);
+  } else {
+    fetch('https://api.ipgeolocation.io/ipgeo?apiKey=1c03be3b1d0b41f793ca0587f6a1a71f') // https://ipinfo.io/json?token=SEU_TOKEN_AQUI (outra opcao)
+      .then(response => response.json())
+      .then(data => {
+        const country = data.country_name || "Unknown";
+        localStorage.setItem("userCountry", country);
+        callback(country);
+      })
+      .catch(error => {
+        console.error("Erro ao obter localização:", error);
+        callback("Unknown");
+      });
+  }
+}
+
+
 function saveScore(score, message, isTop10) {
+  getCountryFromCacheOrAPI((country) => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    let device = "Desktop";
+    if (/mobile|android|iphone|ipad|ipod/.test(userAgent)) {
+      device = "Mobile";
+    } else if (/tablet/.test(userAgent)) {
+      device = "Tablet";
+    }
 
-  fetch('https://ip-api.com/json/')
-    .then(response => response.json())
-    .then(data => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      let device = "Desktop";
-      if (/mobile|android|iphone|ipad|ipod/.test(userAgent)) {
-        device = "Mobile";
-      } else if (/tablet/.test(userAgent)) {
-        device = "Tablet";
-      }
+    const now = new Date();
+    const options = {
+      timeZone: "Europe/Lisbon",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    };
+    const timestamp = now.toLocaleString("pt-PT", options)
+                          .replace(/[/]/g, '-')
+                          .replace(/[:]/g, '-');
 
-      const country = data.country || "Unknown"; 
-      const now = new Date();
-      const options = { timeZone: "Europe/Lisbon", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" };
-      const timestamp = now.toLocaleString("pt-PT", options).replace(/[/]/g, '-').replace(/[:]/g, '-');
+    const dateOnly = timestamp.split(',')[0];
+    const timeOnly = timestamp.split(',')[1].trim();
 
-      const dateOnly = timestamp.split(',')[0];
-      const timeOnly = timestamp.split(',')[1].trim();
-
-      const scoreRef = ref(db, `scores/${dateOnly}/${country}/${timeOnly}`);
-
-      set(scoreRef, {timestamp: timestamp, device: device, score: score, message: message, isTop10: isTop10});
-    })
-    .catch(error => {
-      console.error("Erro ao obter a localização:", error);
+    const scoreRef = ref(db, `scores/${dateOnly}/${country}/${timeOnly}`);
+    set(scoreRef, {
+      timestamp: timestamp,
+      device: device,
+      score: score,
+      message: message,
+      isTop10: isTop10
     });
+  });
 }
 
 let isPaused = false; 
