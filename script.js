@@ -297,7 +297,7 @@ function endGame(message) {
 
 function saveScore(score, message, isTop10) {
 
-  fetch('http://ip-api.com/json/')
+  fetch('https://ip-api.com/json/')
     .then(response => response.json())
     .then(data => {
       const userAgent = navigator.userAgent.toLowerCase();
