@@ -251,8 +251,6 @@ function endGame(message) {
   gameRunning = false;
   clearInterval(scoreInterval);
 
-  saveScore(score, message);
-
   const pauseTitle = document.getElementById('pause-title');
   const finalScore = document.getElementById('final-score');
   const resumeButton = document.getElementById('resume-button');
@@ -262,20 +260,28 @@ function endGame(message) {
 
   onValue(scoresRef, (snapshot) => {
     const allScores = [];
-    snapshot.forEach(child => {
-      const scoreValue = Number(child.val());
-      allScores.push({ timestamp: child.key, score: scoreValue });
+    snapshot.forEach(daySnap => {
+      daySnap.forEach(countrySnap => {
+        countrySnap.forEach(scoreSnap => {
+          const data = scoreSnap.val();
+          const scoreValue = Number(data.score); 
+          if (!isNaN(scoreValue)) {
+            allScores.push(scoreValue);
+          }
+        });
+      });
     });
 
-    const uniqueScores = [...new Set(allScores)];
-
-    uniqueScores.sort((a, b) => b - a);
+    const uniqueScores = [...new Set(allScores)]; 
+    uniqueScores.sort((a, b) => b - a); 
 
     const top10 = uniqueScores.slice(0, 10);
 
-    if (top10.length < 10 || score >= top10[top10.length - 1].score) {
+    if (top10.length < 10 || score >= top10[top10.length - 1]) {
       isTop10 = true;
     }
+
+    saveScore(score, message, isTop10);
 
     pauseTitle.textContent = message; 
     finalScore.textContent = `Score: ${score}${isTop10 ? " (Top 10!)" : ""}`; 
@@ -289,15 +295,34 @@ function endGame(message) {
   });
 }
 
-function saveScore(score, message) {
+function saveScore(score, message, isTop10) {
 
-  const now = new Date();
-  const options = { timeZone: "Europe/Lisbon", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" };
-  const timestamp = now.toLocaleString("pt-PT", options).replace(/[/]/g, '-').replace(/[:]/g, '-');
+  fetch('http://ip-api.com/json/')
+    .then(response => response.json())
+    .then(data => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      let device = "Desktop";
+      if (/mobile|android|iphone|ipad|ipod/.test(userAgent)) {
+        device = "Mobile";
+      } else if (/tablet/.test(userAgent)) {
+        device = "Tablet";
+      }
 
-  const scoreRef = ref(db, `scores/${timestamp}`); 
+      const country = data.country || "Unknown"; 
+      const now = new Date();
+      const options = { timeZone: "Europe/Lisbon", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" };
+      const timestamp = now.toLocaleString("pt-PT", options).replace(/[/]/g, '-').replace(/[:]/g, '-');
 
-  set(scoreRef, score);
+      const dateOnly = timestamp.split(',')[0];
+      const timeOnly = timestamp.split(',')[1].trim();
+
+      const scoreRef = ref(db, `scores/${dateOnly}/${country}/${timeOnly}`);
+
+      set(scoreRef, {timestamp: timestamp, device: device, score: score, message: message, isTop10: isTop10});
+    })
+    .catch(error => {
+      console.error("Erro ao obter a localização:", error);
+    });
 }
 
 let isPaused = false; 
@@ -431,9 +456,16 @@ scoreboardButton.addEventListener('mouseenter', () => {
 
   onValue(scoresRef, (snapshot) => {
     const allScores = [];
-    snapshot.forEach(child => {
-      const score = Number(child.val()); 
-      allScores.push(score);
+    snapshot.forEach(daySnap => {
+      daySnap.forEach(countrySnap => {
+        countrySnap.forEach(scoreSnap => {
+          const data = scoreSnap.val();
+          const score = Number(data.score);
+          if (!isNaN(score)) {
+            allScores.push(score);
+          }
+        });
+      });
     });
 
     const uniqueScores = [...new Set(allScores)];
