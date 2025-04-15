@@ -301,7 +301,8 @@ function getCountryFromCacheOrAPI(callback) {
   if (cachedCountry) {
     callback(cachedCountry);
   } else {
-    fetch('https://api.ipgeolocation.io/ipgeo?apiKey=1c03be3b1d0b41f793ca0587f6a1a71f') // https://ipinfo.io/json?token=SEU_TOKEN_AQUI (outra opcao)
+    fetch('https://ipinfo.io/json?token=325c954ece8013') // https://ipinfo.io/json?token=325c954ece8013 https://api.ipgeolocation.io/ipgeo?apiKey=1c03be3b1d0b41f793ca0587f6a1a71f(outras opcoes)
+    .then(response => response.json())
       .then(response => response.json())
       .then(data => {
         const country = data.country_name || "Unknown";
