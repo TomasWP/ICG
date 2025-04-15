@@ -304,7 +304,7 @@ function getCountryFromCacheOrAPI(callback) {
     fetch('https://api.ipgeolocation.io/ipgeo?apiKey=1c03be3b1d0b41f793ca0587f6a1a71f') // https://ipinfo.io/json?token=325c954ece8013  https://api.ipgeolocation.io/ipgeo?apiKey=1c03be3b1d0b41f793ca0587f6a1a71f (outras opcoes)
     .then(response => response.json())
     .then(data => {
-      const country = data.country || "Unknown";
+      const country = data.country_name || "Unknown";
       localStorage.setItem("userCountry", country);
       callback(country);
     })
