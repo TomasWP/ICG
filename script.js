@@ -323,7 +323,7 @@ function getCountryFromCacheOrAPI(callback) {
       console.error("Erro ao obter localização:", error);
       callback("Unknown");
     });
-}
+  }
 }
 
 function saveScore(score, message, isTop10) {
