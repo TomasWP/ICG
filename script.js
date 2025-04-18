@@ -43,6 +43,11 @@ const controls = new OrbitControls(camera, renderer.domElement);
 let score = 0;
 let scoreInterval;
 let gameRunning = true;
+let inMainMenu = true; 
+let player1Cube; // Variável global para o cubo do jogador 1
+let player2Cube; // Variável global para o cubo do jogador 2
+let keysPlayer1; // Variável global para as teclas do jogador 1
+let keysPlayer2; // Variável global para as teclas do jogador 2
 
 class Box extends THREE.Mesh {
   constructor({width, height, depth, color = '#00ff00', velocity = {x: 0, y: 0, z: 0}, position = {x: 0, y: 0, z: 0}, zAcceleration = false}) {
@@ -135,11 +140,6 @@ ground.material = groundMaterial;
 ground.receiveShadow = true;
 scene.add(ground);
 
-const cube = new Box({ width: 1, height: 1, depth: 1, velocity: { x: 0, y: -0.01, z: 0 } });
-cube.castShadow = true;
-cube.position.z = -(ground.back + cube.depth / 2) - 2;
-scene.add(cube);
-
 const light = new THREE.DirectionalLight(0xffffff, 2.5);
 light.position.set(2, 4, 5);
 light.castShadow = true;
@@ -177,55 +177,59 @@ const keys = {
 };
 
 window.addEventListener('keydown', (event) => {
+  if (inMainMenu) return; // Não faça nada se estiver no menu principal
+
   switch (event.code) {
     case 'KeyW':
     case 'ArrowUp':
-      keys.w.pressed = true;
+      if (cube) keys.w.pressed = true; // Singleplayer
       break;
     case 'KeyA':
     case 'ArrowLeft':
-      keys.a.pressed = true;
+      if (cube) keys.a.pressed = true; // Singleplayer
       break;
     case 'KeyD':
     case 'ArrowRight':
-      keys.d.pressed = true;
+      if (cube) keys.d.pressed = true; // Singleplayer
       break;
     case 'KeyS':
     case 'ArrowDown':
-      keys.s.pressed = true;
+      if (cube) keys.s.pressed = true; // Singleplayer
       break;
     case 'Space':
-      if (cube.canJump) {
+      if (cube && cube.canJump) { // Singleplayer
         cube.velocity.y = 0.1;
         cube.canJump = false;
+      }
+      break;
+    case 'p':
+      if (player2Cube && player2Cube.canJump) { // Multiplayer (Player 2)
+        player2Cube.velocity.y = 0.1;
+        player2Cube.canJump = false;
       }
       break;
   }
 });
 
 window.addEventListener('keyup', (event) => {
+  if (inMainMenu) return; // Não faça nada se estiver no menu principal
+
   switch (event.code) {
     case 'KeyW':
     case 'ArrowUp':
-      keys.w.pressed = false;
+      if (cube) keys.w.pressed = false; // Singleplayer
       break;
     case 'KeyA':
     case 'ArrowLeft':
-      keys.a.pressed = false;
+      if (cube) keys.a.pressed = false; // Singleplayer
       break;
     case 'KeyD':
     case 'ArrowRight':
-      keys.d.pressed = false;
+      if (cube) keys.d.pressed = false; // Singleplayer
       break;
     case 'KeyS':
     case 'ArrowDown':
-      keys.s.pressed = false;
-      break;
-    case 'Space':
-      if (cube.canJump) {
-        cube.velocity.y = 0.1;
-        cube.canJump = false;
-      }
+      if (cube) keys.s.pressed = false; // Singleplayer
       break;
   }
 });
@@ -247,18 +251,19 @@ if (isMobile) {
   });
 }
 
-function endGame(message) {
-  gameRunning = false;
+function endGame(player, message) {
+  gameRunning = false; // Certifique-se de que o jogo pare
   clearInterval(scoreInterval);
 
   const pauseTitle = document.getElementById('pause-title');
   const finalScore = document.getElementById('final-score');
   const resumeButton = document.getElementById('resume-button');
   const restartButton = document.getElementById('restart-button');
+  const mainMenuButton = document.getElementById('main-menu-button');
 
   let isTop10 = false;
 
-  onValue(scoresRef, (snapshot) => {
+  get(scoresRef).then((snapshot) => {
     const allScores = [];
     snapshot.forEach(daySnap => {
       daySnap.forEach(countrySnap => {
@@ -272,18 +277,15 @@ function endGame(message) {
       });
     });
 
-    const uniqueScores = [...new Set(allScores)]; 
-    uniqueScores.sort((a, b) => b - a); 
-
+    const uniqueScores = [...new Set(allScores)];
+    uniqueScores.sort((a, b) => b - a);
     const top10 = uniqueScores.slice(0, 10);
 
-    if (top10.length < 10 || score >= top10[top10.length - 1]) {
-      isTop10 = true;
-    }
+    const isTop10 = top10.length < 10 || score >= top10[top10.length - 1];
 
-    saveScore(score, message, isTop10);
+    saveScore(score, `Game Over! ${player} ${message}`, isTop10);
 
-    pauseTitle.textContent = message; 
+    pauseTitle.textContent = `Game Over! ${player} ${message}`; 
     finalScore.textContent = `Score: ${score}${isTop10 ? " (Top 10!)" : ""}`; 
     finalScore.style.display = 'block'; 
 
@@ -291,7 +293,9 @@ function endGame(message) {
     restartButton.style.display = 'block';
 
     pauseMenu.style.display = 'flex'; 
-    cancelAnimationFrame(animationID); 
+    cancelAnimationFrame(animationID); // Interrompe o loop de animação
+  }).catch((error) => {
+    console.error("Erro ao obter pontuações:", error);
   });
 }
 
@@ -358,34 +362,102 @@ const pauseMenu = document.getElementById('pause-menu');
 const resumeButton = document.getElementById('resume-button');
 
 function pauseGame() {
-  if (!gameRunning) return; 
+  if (!gameRunning || inMainMenu) return; 
 
   isPaused = true;
   pauseMenu.style.display = 'flex'; 
 
   document.getElementById('resume-button').style.display = 'block';
   document.getElementById('restart-button').style.display = 'block'; 
+  document.getElementById('main-menu-button').style.display = 'block'; 
 
   cancelAnimationFrame(animationID); 
 }
 
 document.getElementById('restart-button').addEventListener('click', () => {
+  // Reiniciar o jogo
+  restartGame();
+  console.log("Jogo reiniciado!");
+});
+
+document.getElementById('main-menu-button').addEventListener('click', () => {
   window.location.reload(); 
 });
 
-function resumeGame() {
-  if (!gameRunning) return; 
+function restartGame() {
+  // Fechar o menu de pausa
+  const pauseMenu = document.getElementById('pause-menu');
+  pauseMenu.style.display = 'none';
 
+  // Reiniciar variáveis do jogo
+  score = 0;
+  frames = 0;
+  spawnRate = 250;
+  enemySpeed = 0.005; // Redefinir a velocidade dos inimigos
+  gameRunning = true;
   isPaused = false;
-  pauseMenu.style.display = 'none'; 
-  animate(); 
+
+  // Limpar inimigos existentes
+  enemies.forEach(enemy => {
+    scene.remove(enemy);
+  });
+  enemies.length = 0;
+
+  // Verificar se está no modo multiplayer
+  console.log(typeof player1Cube)
+  console.log(typeof player1Cube !== 'undefined' && typeof player2Cube !== 'undefined');
+  if (typeof player1Cube !== 'undefined' && typeof player2Cube !== 'undefined') {
+    console.log("Modo multiplayer reiniciado!");
+    // Remover o cubo do Player 1
+    if (player1Cube) {
+      scene.remove(player1Cube);
+      player1Cube = null; // Opcional: redefinir a variável para evitar referências futuras
+    }
+
+    // Remover o cubo do Player 2
+    if (player2Cube) {
+      scene.remove(player2Cube);
+      player2Cube = null; // Opcional: redefinir a variável para evitar referências futuras
+    }
+    // Configurar o modo multiplayer
+    setupMultiplayer();
+
+  } else if (typeof cube !== 'undefined') {
+    // Resetar posição e velocidade do jogador no modo singleplayer
+    cube.position.set(0, 0, -(ground.back + 2));
+    cube.velocity = { x: 0, y: -0.01, z: 0 }; // Redefinir a velocidade do cubo
+    cube.canJump = false;
+    animate(); // Reiniciar a animação
+  }
+
+  // Redefinir a posição e a orientação da câmera
+  camera.position.set(0, ground.height * 6, ground.depth * 0.32 + 10);
+  camera.lookAt(ground.position);
+
+  // Atualizar UI
+  document.getElementById('score').textContent = `Score: ${score}`;
+
+  // Reiniciar o intervalo de pontuação
+  clearInterval(scoreInterval);
+  scoreInterval = setInterval(() => {
+    if (gameRunning && !isPaused && !inMainMenu) {
+      score++;
+      document.getElementById('score').textContent = `Score: ${score}`;
+    }
+  }, 1000);
+
+  console.log("Estado do jogo reiniciado!");
 }
 
 
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
+  if (document.hidden && !inMainMenu) {
     pauseGame(); 
   }
+});
+
+resumeButton.addEventListener('click', () => {
+  resumeGame(); // Chama a função para retomar o jogo
 });
 
 document.addEventListener('keydown', (event) => {
@@ -399,9 +471,21 @@ document.addEventListener('keydown', (event) => {
 });
 
 
-resumeButton.addEventListener('click', () => {
-  resumeGame(); 
-});
+function resumeGame() {
+  if (!gameRunning) return; 
+
+  isPaused = false;
+  pauseMenu.style.display = 'none';
+
+  // Verificar se está no modo multiplayer ou singleplayer
+  if (typeof player1Cube !== 'undefined' && typeof player2Cube !== 'undefined') {
+    // Modo multiplayer
+    animateMultiplayer();
+  } else if (typeof cube !== 'undefined') {
+    // Modo singleplayer
+    animate();
+  }
+}
 
 const enemies = [];
 let frames = 0;
@@ -410,7 +494,7 @@ let animationID;
 let enemySpeed = 0.005; 
 
 function animate() {
-  if (isPaused) return; 
+  if (isPaused || !cube) return; // Verifica se o jogo está pausado ou se o cube não foi inicializado
 
   animationID = requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -430,8 +514,8 @@ function animate() {
 
   cube.update(ground);
 
-  if (cube.bottom < ground.top-5 || cube.top <= ground.top) {
-    endGame("Game Over by Fall!");
+  if (cube.bottom < ground.top - 5 || cube.top <= ground.top) {
+    endGame("You", "fell!");
     cancelAnimationFrame(animationID);
     return;
   }
@@ -439,15 +523,17 @@ function animate() {
   enemies.forEach(enemy => {
     enemy.update(ground);
     if (boxColision({ box1: cube, box2: enemy })) {
-      endGame("Game Over by Collision!");
+      endGame("You", "have collided!");
       cancelAnimationFrame(animationID);
     }
   });
 
   if (frames % spawnRate === 0) {
-    if (spawnRate > 25) spawnRate = spawnRate- 10;
+    if (spawnRate > 25) spawnRate -= 10;
     const enemy = new Box({
-      width: 1, height: 1, depth: 1,
+      width: 1,
+      height: 1,
+      depth: 1,
       position: {
         x: (Math.random() * (ground.right - ground.left)) + ground.left,
         y: 0,
@@ -461,16 +547,237 @@ function animate() {
     enemy.castShadow = true;
     scene.add(enemy);
     enemies.push(enemy);
-    enemySpeed += 0.0008; 
+    enemySpeed += 0.0008;
   }
 
   frames++;
 }
 
-animate();
+let cube; // Declare o cubo global fora do escopo para uso no singleplayer
+
+function startSinglePlayerGame(){
+  // Criar o cubo para o modo singleplayer
+  cube = new Box({
+    width: 1,
+    height: 1,
+    depth: 1,
+    velocity: { x: 0, y: -0.01, z: 0 },
+    position: { x: 0, y: 0, z: -(ground.back + 2) }
+  });
+  cube.castShadow = true;
+  scene.add(cube);
+
+  // Inicializar o jogo
+  console.log("Jogo iniciado!");
+  animate();
+}
+
+document.getElementById("singleplayer-button").addEventListener("click", () => {
+  // Ocultar o menu inicial
+  const startMenu = document.getElementById("start-menu");
+  startMenu.style.display = "none";
+
+  // Mostrar o score
+  document.getElementById("score").style.display = "block";
+
+  // Atualizar estado
+  inMainMenu = false;
+
+  startSinglePlayerGame(); // Iniciar o jogo singleplayer
+});
+
+document.getElementById("multiplayer-button").addEventListener("click", () => {
+  // Ocultar o menu inicial
+  const startMenu = document.getElementById("start-menu");
+  startMenu.style.display = "none";
+
+  // Mostrar o score
+  document.getElementById("score").style.display = "block";
+
+  // Atualizar estado
+  inMainMenu = false;
+
+  // Configurar o modo multiplayer
+  setupMultiplayer();
+});
+
+document.getElementById("main-menu-button").addEventListener("click", () => {
+  // Atualizar estado
+  inMainMenu = true;
+  gameRunning = false;
+
+  // Esconder o score
+  document.getElementById("score").style.display = "none";
+
+  // Limpar o intervalo de pontuação
+  clearInterval(scoreInterval);
+
+  // Recarregar a página para reiniciar o estado
+  window.location.reload();
+});
+
+function setupMultiplayer() {
+  // Criar dois cubos para os jogadores
+  player1Cube = new Box({
+    width: 1,
+    height: 1,
+    depth: 1,
+    color: '#00ff00', // Verde
+    velocity: { x: 0, y: -0.01, z: 0 },
+    position: { x: -2, y: 0, z: -(ground.back + 2) }
+  });
+  player1Cube.castShadow = true;
+  scene.add(player1Cube);
+
+  player2Cube = new Box({
+    width: 1,
+    height: 1,
+    depth: 1,
+    color: '#ffff00', // Amarelo
+    velocity: { x: 0, y: -0.01, z: 0 },
+    position: { x: 2, y: 0, z: -(ground.back + 2) }
+  });
+  player2Cube.castShadow = true;
+  scene.add(player2Cube);
+
+  keysPlayer1 = {
+    a: { pressed: false },
+    d: { pressed: false },
+    w: { pressed: false },
+    s: { pressed: false },
+    space: { pressed: false },
+  };
+
+  keysPlayer2 = {
+    ArrowLeft: { pressed: false },
+    ArrowRight: { pressed: false },
+    ArrowUp: { pressed: false },
+    ArrowDown: { pressed: false },
+    p: { pressed: false },
+  };
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "a") keysPlayer1.a.pressed = true;
+    if (event.key === "d") keysPlayer1.d.pressed = true;
+    if (event.key === "w") keysPlayer1.w.pressed = true;
+    if (event.key === "s") keysPlayer1.s.pressed = true;
+    if (event.code === "Space" && player1Cube.canJump) {
+      player1Cube.velocity.y = 0.1;
+      player1Cube.canJump = false;
+    }
+
+    if (event.key === "ArrowLeft") keysPlayer2.ArrowLeft.pressed = true;
+    if (event.key === "ArrowRight") keysPlayer2.ArrowRight.pressed = true;
+    if (event.key === "ArrowUp") keysPlayer2.ArrowUp.pressed = true;
+    if (event.key === "ArrowDown") keysPlayer2.ArrowDown.pressed = true;
+    if (event.key === "p" && player2Cube.canJump) {
+      player2Cube.velocity.y = 0.1;
+      player2Cube.canJump = false;
+    }
+  });
+
+  window.addEventListener("keyup", (event) => {
+    if (event.key === "a") keysPlayer1.a.pressed = false;
+    if (event.key === "d") keysPlayer1.d.pressed = false;
+    if (event.key === "w") keysPlayer1.w.pressed = false;
+    if (event.key === "s") keysPlayer1.s.pressed = false;
+
+    if (event.key === "ArrowLeft") keysPlayer2.ArrowLeft.pressed = false;
+    if (event.key === "ArrowRight") keysPlayer2.ArrowRight.pressed = false;
+    if (event.key === "ArrowUp") keysPlayer2.ArrowUp.pressed = false;
+    if (event.key === "ArrowDown") keysPlayer2.ArrowDown.pressed = false;
+  });
+
+  animateMultiplayer();
+}
+
+function animateMultiplayer() {
+    if (!gameRunning || isPaused) return; // Verifica se o jogo está rodando
+
+    player1Cube.velocity.x = 0;
+    player1Cube.velocity.z = 0;
+    if (keysPlayer1.a.pressed) player1Cube.velocity.x -= 0.045;
+    if (keysPlayer1.d.pressed) player1Cube.velocity.x += 0.045;
+    if (keysPlayer1.w.pressed) player1Cube.velocity.z = -0.045;
+    if (keysPlayer1.s.pressed) player1Cube.velocity.z = 0.045;
+    player1Cube.update(ground);
+
+    player2Cube.velocity.x = 0;
+    player2Cube.velocity.z = 0;
+    if (keysPlayer2.ArrowLeft.pressed) player2Cube.velocity.x -= 0.045;
+    if (keysPlayer2.ArrowRight.pressed) player2Cube.velocity.x += 0.045;
+    if (keysPlayer2.ArrowUp.pressed) player2Cube.velocity.z = -0.045;
+    if (keysPlayer2.ArrowDown.pressed) player2Cube.velocity.z = 0.045;
+    player2Cube.update(ground);
+
+    // Spawn de inimigos
+    if (frames % spawnRate === 0) {
+      if (spawnRate > 25) spawnRate -= 10;
+      const enemy = new Box({
+        width: 1,
+        height: 1,
+        depth: 1,
+        position: {
+          x: (Math.random() * (ground.right - ground.left)) + ground.left,
+          y: 0,
+          z: ground.back + player1Cube.depth / 2 - 1
+        },
+        velocity: { x: 0, y: 0, z: enemySpeed },
+        color: 'red',
+        zAcceleration: true
+      });
+
+      enemy.castShadow = true;
+      scene.add(enemy);
+      enemies.push(enemy);
+      enemySpeed += 0.0008;
+    }
+
+    // Atualizar inimigos
+    enemies.forEach((enemy, index) => {
+      enemy.update(ground);
+
+      // Verificar colisão com Player 1
+      if (boxColision({ box1: player1Cube, box2: enemy })) {
+        endGame("Player 1", "has colided!");
+        cancelAnimationFrame(animationID);
+        return; // Sai da função após o término do jogo
+      }
+
+      // Verificar colisão com Player 2
+      if (boxColision({ box1: player2Cube, box2: enemy })) {
+        endGame("Player 2", "has colided!");
+        cancelAnimationFrame(animationID);
+        return; // Sai da função após o término do jogo
+      }
+
+      if (player1Cube.bottom < ground.top-5 || player1Cube.top <= ground.top) {
+        endGame("Player 1", "fell!");
+        cancelAnimationFrame(animationID);
+        return;
+      }
+
+      if (player2Cube.bottom < ground.top-5 || player2Cube.top <= ground.top) {
+        endGame("Player 2", "fell!");
+        cancelAnimationFrame(animationID);
+        return;
+      }
+
+      // Remover inimigos fora do alcance
+      if (enemy.position.z > ground.front) {
+        scene.remove(enemy);
+        enemies.splice(index, 1);
+      }
+    });
+
+    frames++;
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(animateMultiplayer);
+  }
 
 scoreInterval = setInterval(() => {
-  if (gameRunning && !isPaused) {
+  if (gameRunning && !isPaused && !inMainMenu) {
     score++;
     document.getElementById('score').textContent = `Score: ${score}`;
   }
@@ -488,16 +795,17 @@ scoreboardButton.addEventListener('mouseenter', () => {
       daySnap.forEach(countrySnap => {
         countrySnap.forEach(scoreSnap => {
           const data = scoreSnap.val();
-          const score = Number(data.score);
-          if (!isNaN(score)) {
-            allScores.push(score);
+          if (data && typeof data.score !== 'undefined') {
+            const scoreValue = Number(data.score);
+            if (!isNaN(scoreValue)) {
+              allScores.push(scoreValue);
+            }
           }
         });
       });
     });
 
     const uniqueScores = [...new Set(allScores)];
-
     uniqueScores.sort((a, b) => b - a);
 
     const top10 = uniqueScores.slice(0, 10);

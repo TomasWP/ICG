@@ -22,26 +22,44 @@
   </script>
 </head>
 <body>
+  <div id="start-menu">
+    <div id="start-content">
+      <h2 id="start-title">Cube Runner</h2>
+      <button id="singleplayer-button">Single Player</button>
+      <button id="multiplayer-button">Multiplayer</button>
+    </div>
+  </div>
+
   <div id="pause-menu" style="display: none;">
     <div id="pause-content">
       <h2 id="pause-title">Game Paused</h2>
       <div id="final-score" style="display: none;">Score: 0</div>
       <button id="resume-button">Resume</button>
       <button id="restart-button" style="display: none;">Restart</button>
+      <button id="main-menu-button">Main Menu</button>
     </div>
   </div>
   
   <div id="score">Score: 0</div>
+  <div id="player-status"></div>
 
   <button id="help-button">?</button>
   <div id="help-tooltip">
-    <strong>Controles:</strong><br>
+  <strong>Controles:</strong><br>
     <br>Computador:<br>
+    <strong>Single Player:</strong><br>
     • Teclas W, A, S, D para mover<br>
     • Barra de Espaço para saltar<br>
+    <br><strong>Multiplayer:</strong><br>
+    <strong>Player 1:</strong><br>
+    • Teclas W, A, S, D para mover<br>
+    • Barra de Espaço para saltar<br>
+    <strong>Player 2:</strong><br>
+    • Setas (←, ↑, ↓, →) para mover<br>
+    • Tecla P para saltar<br>
     <br>Telemóvel:<br>
     • Inclinar o dispositivo para mover<br>
-    • Tocar no ecrã para saltar
+    • Tocar no ecrã para saltar<br>
   </div>
 
   <button id="scoreboard-button">🏆</button>
@@ -49,6 +67,13 @@
     <strong>Top 10 Scores</strong>
     <ol id="score-list"></ol>
   </div>  
+
+  <div id="multiplayer-container" style="display: flex; width: 100%; height: 100%;">
+    <div id="player1-container" style="width: 50%; height: 100%;"></div>
+    <div id="player2-container" style="width: 50%; height: 100%;"></div>
+  </div>
+</div>
+
 
   <script type="module" src="./script.obfuscated.js"></script>
 </body>
