@@ -23,6 +23,10 @@
 </head>
 <body>
   <div id="start-menu">
+    <audio id="menu-music" loop>
+      <source src="assets/background.mp3" type="audio/mpeg">
+        Your browser doesn't support this audio element.
+    </audio>
     <div id="start-content">
       <h2 id="start-title">Cube Runner</h2>
       <button id="singleplayer-button">Single Player</button>
@@ -72,8 +76,33 @@
     <div id="player1-container" style="width: 50%; height: 100%;"></div>
     <div id="player2-container" style="width: 50%; height: 100%;"></div>
   </div>
-</div>
 
+
+  <div id="audio-control">
+    <button id="mute-button">🔊</button>
+    <input id="volume-slider" type="range" min="0" max="1" step="0.1" value="0.5">
+  </div>
+
+  <audio id="click-sound">
+    <source src="assets/click.wav" type="audio/mpeg">
+  </audio>
+
+  <audio id="jump-sound">
+    <source src="assets/jump.wav" type="audio/mpeg">
+  </audio>
+
+  <audio id="game-start">
+    <source src="assets/game-start.wav" type="audio/mpeg">
+  </audio>
+
+  <audio id="game-over">
+    <source src="assets/game-over.wav" type="audio/mpeg">
+  </audio>
+
+  <audio id="top10-sound">
+    <source src="assets/top10.wav" type="audio/mpeg">
+  </audio>
+</div>
 
   <script type="module" src="./script.obfuscated.js"></script>
 </body>

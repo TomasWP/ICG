@@ -285,6 +285,13 @@ function endGame(player, message) {
 
     saveScore(score, `Game Over! ${player} ${message}`, isTop10);
 
+    // Tocar o som de Top 10 se o jogador entrar no Top 10
+    if (isTop10) {
+      playTop10Sound();
+    }else{
+      playGameOver(); // Tocar o som de Game Over se não entrar no Top 10
+    }    
+
     pauseTitle.textContent = `Game Over! ${player} ${message}`; 
     finalScore.textContent = `Score: ${score}${isTop10 ? " (Top 10!)" : ""}`; 
     finalScore.style.display = 'block'; 
@@ -377,7 +384,6 @@ function pauseGame() {
 document.getElementById('restart-button').addEventListener('click', () => {
   // Reiniciar o jogo
   restartGame();
-  console.log("Jogo reiniciado!");
 });
 
 document.getElementById('main-menu-button').addEventListener('click', () => {
@@ -404,10 +410,7 @@ function restartGame() {
   enemies.length = 0;
 
   // Verificar se está no modo multiplayer
-  console.log(typeof player1Cube)
-  console.log(typeof player1Cube !== 'undefined' && typeof player2Cube !== 'undefined');
   if (typeof player1Cube !== 'undefined' && typeof player2Cube !== 'undefined') {
-    console.log("Modo multiplayer reiniciado!");
     // Remover o cubo do Player 1
     if (player1Cube) {
       scene.remove(player1Cube);
@@ -445,8 +448,6 @@ function restartGame() {
       document.getElementById('score').textContent = `Score: ${score}`;
     }
   }, 1000);
-
-  console.log("Estado do jogo reiniciado!");
 }
 
 
@@ -568,7 +569,6 @@ function startSinglePlayerGame(){
   scene.add(cube);
 
   // Inicializar o jogo
-  console.log("Jogo iniciado!");
   animate();
 }
 
@@ -828,3 +828,181 @@ scoreboardButton.addEventListener('mouseleave', () => {
 scoreboardPopup.addEventListener('mouseleave', () => {
   scoreboardPopup.style.display = 'none';
 });
+
+const menuMusic = document.getElementById('menu-music');
+
+
+// MUSIC
+
+
+const muteButton = document.getElementById('mute-button');
+const volumeSlider = document.getElementById('volume-slider');
+
+// Atualizar o volume da música com o slider
+volumeSlider.addEventListener('input', () => {
+  menuMusic.volume = volumeSlider.value;
+  localStorage.setItem('menuMusicVolume', volumeSlider.value); // Salva o volume no localStorage
+
+  if (menuMusic.volume === 0) {
+    muteButton.textContent = '🔇'; // Atualiza o ícone para mute
+  } else {
+    muteButton.textContent = '🔊'; // Atualiza o ícone para som
+  }
+});
+
+// Alternar mute ao clicar no botão
+muteButton.addEventListener('click', () => {
+  if (menuMusic.volume > 0) {
+    menuMusic.volume = 0;
+    volumeSlider.value = 0;
+    muteButton.textContent = '🔇'; // Atualiza o ícone para mute
+  } else {
+    menuMusic.volume = localStorage.getItem('menuMusicVolume') || 0.5; // Recupera o volume salvo ou define o padrão
+    volumeSlider.value = menuMusic.volume;
+    muteButton.textContent = '🔊'; // Atualiza o ícone para som
+  }
+
+  localStorage.setItem('menuMusicVolume', menuMusic.volume); // Salva o volume no localStorage
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedVolume = localStorage.getItem('menuMusicVolume'); // Recupera o volume salvo
+  if (savedVolume !== null) {
+    menuMusic.volume = savedVolume;
+    volumeSlider.value = savedVolume;
+    muteButton.textContent = savedVolume > 0 ? '🔊' : '🔇'; // Atualiza o ícone
+  } else {
+    menuMusic.volume = 0.5; // Define o volume padrão
+    volumeSlider.value = 0.5;
+  }
+
+  if (inMainMenu) {
+    playMenuMusic();
+  }
+});
+
+// Reproduzir música ao entrar no menu principal
+function playMenuMusic() {
+  const savedVolume = localStorage.getItem('menuMusicVolume'); // Recupera o volume salvo
+  menuMusic.volume = savedVolume !== null ? savedVolume : 0.5; // Usa o volume salvo ou define o padrão como 0.5
+  menuMusic.play();
+}
+
+// Pausar música ao sair do menu principal
+function stopMenuMusic() {
+  menuMusic.pause();
+  menuMusic.currentTime = 0; // Reinicia a música
+}
+
+// Iniciar música ao carregar o menu principal
+document.addEventListener('DOMContentLoaded', () => {
+  if (inMainMenu) {
+    playMenuMusic();
+  }
+});
+
+// Parar música ao iniciar o jogo
+document.getElementById("singleplayer-button").addEventListener("click", () => {
+  stopMenuMusic();
+});
+
+document.getElementById("multiplayer-button").addEventListener("click", () => {
+  stopMenuMusic();
+});
+
+// Reproduzir música novamente ao voltar ao menu principal
+document.getElementById("main-menu-button").addEventListener("click", () => {
+  playMenuMusic();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopMenuMusic(); // Pausa a música quando a aba não está visível
+  } else if (inMainMenu) {
+    playMenuMusic(); // Retoma a música se o usuário estiver no menu principal
+  }
+});
+
+const clickSound = document.getElementById('click-sound');
+
+// Função para reproduzir o som de clique
+function playClickSound() {
+  clickSound.volume = 0.4; // Define o volume do som de salto (0.0 a 1.0)
+  clickSound.currentTime = 0; // Reinicia o som para evitar sobreposição
+  clickSound.play();
+}
+
+// Adicionar o evento de clique a todos os botões do menu
+const menuButtons = document.querySelectorAll('button');
+menuButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    playClickSound();
+  });
+});
+
+const jumpSound = document.getElementById('jump-sound');
+
+// Função para reproduzir o som de salto
+function playJumpSound() {
+  jumpSound.volume = 0.1; // Define o volume do som de salto (0.0 a 1.0)
+  jumpSound.currentTime = 0; // Reinicia o som para evitar sobreposição
+  jumpSound.play();
+}
+
+// Adicione o som de salto ao evento de pulo do cubo
+document.addEventListener('keydown', (event) => {
+  if (event.code === 'Space' && cube.canJump) {
+    playJumpSound(); // Reproduz o som de salto
+    cube.velocity.y = 0.1; // Lógica do salto
+    cube.canJump = false;
+  }
+});
+
+// Para o multiplayer (Player 2)
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'p' && player2Cube && player2Cube.canJump) {
+    playJumpSound(); // Reproduz o som de salto
+    player2Cube.velocity.y = 0.1; // Lógica do salto
+    player2Cube.canJump = false;
+  }
+});
+
+const gameStart = document.getElementById('game-start');
+
+// Função para reproduzir o som especial
+function playGameStart() {
+  gameStart.volume = 0.2; // Define o volume do som (0.0 a 1.0)
+  gameStart.currentTime = 0; // Reinicia o som para evitar sobreposição
+  gameStart.play();
+}
+
+// Adicionar o som especial aos botões específicos
+document.getElementById("singleplayer-button").addEventListener("click", () => {
+  playGameStart();
+});
+
+document.getElementById("multiplayer-button").addEventListener("click", () => {
+  playGameStart();
+});
+
+document.getElementById("restart-button").addEventListener("click", () => {
+  playGameStart();
+});
+
+const gameOver = document.getElementById('game-over');
+
+// Função para reproduzir o som de "End Game"
+function playGameOver() {
+  gameOver.volume = 0.15; // Define o volume do som (0.0 a 1.0)
+  gameOver.currentTime = 0; // Reinicia o som para evitar sobreposição
+  gameOver.play();
+}
+
+const top10Sound = document.getElementById('top10-sound');
+
+// Função para reproduzir o som de Top 10
+function playTop10Sound() {
+  top10Sound.volume = 0.5; // Define o volume do som (0.0 a 1.0)
+  top10Sound.currentTime = 0; // Reinicia o som para evitar sobreposição
+  top10Sound.play();
+}

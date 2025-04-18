@@ -283,3 +283,30 @@ body {
   font-size: 16px;
   cursor: pointer;
 }
+
+#audio-control {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 32px;
+  z-index: 1000;
+  user-select: none;
+}
+
+#audio-control button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+#audio-control input[type="range"] {
+  width: 100px;
+  cursor: pointer;
+}
