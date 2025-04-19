@@ -44,10 +44,10 @@ let score = 0;
 let scoreInterval;
 let gameRunning = true;
 let inMainMenu = true; 
-let player1Cube; // Variável global para o cubo do jogador 1
-let player2Cube; // Variável global para o cubo do jogador 2
-let keysPlayer1; // Variável global para as teclas do jogador 1
-let keysPlayer2; // Variável global para as teclas do jogador 2
+let player1Cube; 
+let player2Cube; 
+let keysPlayer1; 
+let keysPlayer2; 
 
 class Box extends THREE.Mesh {
   constructor({width, height, depth, color = '#00ff00', velocity = {x: 0, y: 0, z: 0}, position = {x: 0, y: 0, z: 0}, zAcceleration = false}) {
@@ -177,7 +177,7 @@ const keys = {
 };
 
 window.addEventListener('keydown', (event) => {
-  if (inMainMenu) return; // Não faça nada se estiver no menu principal
+  if (inMainMenu) return; 
 
   switch (event.code) {
     case 'KeyW':
@@ -212,7 +212,7 @@ window.addEventListener('keydown', (event) => {
 });
 
 window.addEventListener('keyup', (event) => {
-  if (inMainMenu) return; // Não faça nada se estiver no menu principal
+  if (inMainMenu) return; 
 
   switch (event.code) {
     case 'KeyW':
@@ -245,7 +245,7 @@ if (isMobile) {
 
   window.addEventListener('touchstart', () => {
     if (cube.canJump) {
-      playJumpSound(); // Reproduz o som de salto
+      playJumpSound(); 
       cube.velocity.y = 0.1;
       cube.canJump = false;
     }
@@ -253,7 +253,7 @@ if (isMobile) {
 }
 
 function endGame(player, message) {
-  gameRunning = false; // Certifique-se de que o jogo pare
+  gameRunning = false; // Certificar que o jogo para
   clearInterval(scoreInterval);
 
   const pauseTitle = document.getElementById('pause-title');
@@ -383,7 +383,6 @@ function pauseGame() {
 }
 
 document.getElementById('restart-button').addEventListener('click', () => {
-  // Reiniciar o jogo
   restartGame();
 });
 
@@ -400,7 +399,7 @@ function restartGame() {
   score = 0;
   frames = 0;
   spawnRate = 250;
-  enemySpeed = 0.005; // Redefinir a velocidade dos inimigos
+  enemySpeed = 0.005;
   gameRunning = true;
   isPaused = false;
 
@@ -415,13 +414,13 @@ function restartGame() {
     // Remover o cubo do Player 1
     if (player1Cube) {
       scene.remove(player1Cube);
-      player1Cube = null; // Opcional: redefinir a variável para evitar referências futuras
+      player1Cube = null;
     }
 
     // Remover o cubo do Player 2
     if (player2Cube) {
       scene.remove(player2Cube);
-      player2Cube = null; // Opcional: redefinir a variável para evitar referências futuras
+      player2Cube = null;
     }
     // Configurar o modo multiplayer
     setupMultiplayer();
@@ -459,7 +458,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 resumeButton.addEventListener('click', () => {
-  resumeGame(); // Chama a função para retomar o jogo
+  resumeGame();
 });
 
 document.addEventListener('keydown', (event) => {
@@ -555,7 +554,7 @@ function animate() {
   frames++;
 }
 
-let cube; // Declare o cubo global fora do escopo para uso no singleplayer
+let cube;
 
 function startSinglePlayerGame(){
   // Criar o cubo para o modo singleplayer
@@ -610,10 +609,8 @@ document.getElementById("main-menu-button").addEventListener("click", () => {
   // Esconder o score
   document.getElementById("score").style.display = "none";
 
-  // Limpar o intervalo de pontuação
   clearInterval(scoreInterval);
 
-  // Recarregar a página para reiniciar o estado
   window.location.reload();
 });
 
@@ -693,7 +690,7 @@ function setupMultiplayer() {
 }
 
 function animateMultiplayer() {
-    if (!gameRunning || isPaused) return; // Verifica se o jogo está rodando
+    if (!gameRunning || isPaused) return;
 
     player1Cube.velocity.x = 0;
     player1Cube.velocity.z = 0;
@@ -742,14 +739,14 @@ function animateMultiplayer() {
       if (boxColision({ box1: player1Cube, box2: enemy })) {
         endGame("Player 1", "has colided!");
         cancelAnimationFrame(animationID);
-        return; // Sai da função após o término do jogo
+        return;
       }
 
       // Verificar colisão com Player 2
       if (boxColision({ box1: player2Cube, box2: enemy })) {
         endGame("Player 2", "has colided!");
         cancelAnimationFrame(animationID);
-        return; // Sai da função após o término do jogo
+        return;
       }
 
       if (player1Cube.bottom < ground.top-5 || player1Cube.top <= ground.top) {
@@ -834,7 +831,6 @@ const menuMusic = document.getElementById('menu-music');
 
 
 // MUSIC
-
 
 const muteButton = document.getElementById('mute-button');
 const volumeSlider = document.getElementById('volume-slider');
