@@ -245,6 +245,7 @@ if (isMobile) {
 
   window.addEventListener('touchstart', () => {
     if (cube.canJump) {
+      playJumpSound(); // Reproduz o som de salto
       cube.velocity.y = 0.1;
       cube.canJump = false;
     }
