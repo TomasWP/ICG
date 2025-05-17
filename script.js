@@ -176,14 +176,12 @@ skyUniforms['sunPosition'].value.copy(light.position);
 const obstacleModels = [
   '/assets/obstacle1.glb',
   '/assets/obstacle2.glb',
-  '/assets/obstacle3.glb',
 ];
 
 // Array de scales (um para cada modelo, na mesma ordem)
 const obstacleScales = [
   { x: 2, y: 2, z: 1.5 }, // obstacle1.glb
-  { x: 3, y: 5, z: 3 }, // obstacle2.glb
-  { x: 0.008, y: 0.013, z: 0.008 }, // obstacle3.glb
+  { x: 0.008, y: 0.013, z: 0.008 }, // obstacle2.glb
 ];
 
 // Configuração da câmara
@@ -482,9 +480,7 @@ function restartGame() {
     animate(); // Reiniciar a animação
   }
 
-  // Redefinir a posição e a orientação da câmera
-  camera.position.set(0, ground.height * 6, ground.depth * 0.32 + 10);
-  camera.lookAt(ground.position);
+  setCameraPosition(0); // Voltar à câmara padrão
 
   // Atualizar UI
   document.getElementById('score').textContent = `Score: ${score}`;
@@ -602,55 +598,72 @@ function animate() {
 }
 
 function spawnObstacle() {
-  // Escolhe aleatoriamente um modelo
-  const randomIndex = Math.floor(Math.random() * obstacleModels.length);
-  const modelPath = obstacleModels[randomIndex];
-  const scale = obstacleScales[randomIndex];
+  const maxTries = 10; // Número máximo de tentativas para evitar loop infinito
+  let tries = 0;
+  let validPosition = false;
+  let spawnX, spawnZ;
 
-  const loader = new GLTFLoader();
-  loader.load(modelPath, function(gltf) {
-    const obstacle = gltf.scene;
-    obstacle.scale.set(scale.x, scale.y, scale.z);
-    obstacle.rotation.y = Math.PI / 2;
+  while (!validPosition && tries < maxTries) {
+    spawnX = (Math.random() * (ground.right - ground.left)) + ground.left;
+    spawnZ = ground.back + 1.8 / 2 - 1;
 
-    // Adiciona temporariamente para calcular o bounding box
-    scene.add(obstacle);
+    // Verifica se está suficientemente afastado dos outros obstáculos
+    validPosition = true;
+    for (const enemy of enemies) {
+      const dx = Math.abs(enemy.box.position.x - spawnX);
+      const dz = Math.abs(enemy.box.position.z - spawnZ);
+      if (dx < 2 && dz < 2) { // Ajusta o valor mínimo de distância conforme o tamanho dos obstáculos
+        validPosition = false;
+        break;
+      }
+    }
+    tries++;
+  }
 
-    // Calcula o bounding box já com o scale aplicado
-    const box3 = new THREE.Box3().setFromObject(obstacle);
-    const modelBaseY = box3.min.y;
-    const yOffset = ground.top - modelBaseY;
+  // Só faz spawn se encontrou uma posição válida
+  if (validPosition) {
+    const randomIndex = Math.floor(Math.random() * obstacleModels.length);
+    const modelPath = obstacleModels[randomIndex];
+    const scale = obstacleScales[randomIndex];
 
-    // Ajusta a posição Y para que a base do modelo fique exatamente no topo do ground
-    obstacle.position.set(
-      (Math.random() * (ground.right - ground.left)) + ground.left,
-      yOffset,
-      ground.back + 1.8 / 2 - 1
-    );
+    const loader = new GLTFLoader();
+    loader.load(modelPath, function(gltf) {
+      const obstacle = gltf.scene;
+      obstacle.scale.set(scale.x, scale.y, scale.z);
+      obstacle.rotation.y = Math.PI / 2;
 
-    // Atualiza o bounding box após mover
-    box3.setFromObject(obstacle);
+      scene.add(obstacle);
 
-    // Para movimento e colisão, associe um Box invisível
-    const box = new Box({
-      width: 1,
-      height: 1,
-      depth: 1,
-      position: { x: obstacle.position.x, y: obstacle.position.y+3, z: obstacle.position.z },
-      velocity: { x: 0, y: 0, z: enemySpeed },
-      color: 'red',
-      zAcceleration: true
+      // Calcula o bounding box já com o scale aplicado
+      const box3 = new THREE.Box3().setFromObject(obstacle);
+      const modelBaseY = box3.min.y;
+      const yOffset = ground.top - modelBaseY;
+
+      obstacle.position.set(
+        spawnX,
+        yOffset,
+        spawnZ
+      );
+
+      // Para movimento e colisão, associe um Box invisível
+      const box = new Box({
+        width: 1,
+        height: 1,
+        depth: 1,
+        position: { x: obstacle.position.x, y: obstacle.position.y, z: obstacle.position.z },
+        velocity: { x: 0, y: 0, z: enemySpeed },
+        color: 'red',
+        zAcceleration: true
+      });
+      box.visible = false;
+      scene.add(box);
+
+      obstacle.userData.box = box;
+      enemies.push({ model: obstacle, box: box });
+
+      enemySpeed += 0.0008;
     });
-    box.visible = false;
-    scene.add(box);
-
-    obstacle.userData.box = box;
-
-    // Já está na cena, não precisa adicionar de novo
-    enemies.push({ model: obstacle, box: box });
-
-    enemySpeed += 0.0008;
-  });
+  }
 }
 
 let cube;
