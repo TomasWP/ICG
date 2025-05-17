@@ -1,12 +1,10 @@
-// TODO: Replace cube and obstacle with 3D models
-
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
 import { getDatabase, ref, push, set, get, child } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js';
 import { onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
-
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVggvE4QGrIgoiHxoPYTwpxWfVcdysJag",
@@ -39,6 +37,14 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
+
+controls.addEventListener('change', () => {
+  // Limita a altura mínima da câmara ao nível do topo do chão
+  if (camera.position.y < ground.top + 0.5) {
+    camera.position.y = ground.top + 0.5;
+    controls.update();
+  }
+});
 
 let score = 0;
 let scoreInterval;
@@ -132,7 +138,7 @@ const groundMaterial = new THREE.MeshStandardMaterial({ map: roadTexture });
 const ground = new Box({ 
   width: 14, 
   height: 0.5, 
-  depth: 40, 
+  depth: 50, 
   color: '#ffffff', 
   position: { x: 0, y: -2, z: 0 }
 });
@@ -166,8 +172,50 @@ skyUniforms['mieCoefficient'].value = 0.005;
 skyUniforms['mieDirectionalG'].value = 0.8;
 skyUniforms['sunPosition'].value.copy(light.position);
 
-camera.position.set(0, ground.height * 6, ground.depth * 0.32 + 10);
-camera.lookAt(ground.position);
+// Configuração dos obstaculos
+const obstacleModels = [
+  '/assets/obstacle1.glb',
+  '/assets/obstacle2.glb',
+  '/assets/obstacle3.glb',
+];
+
+// Array de scales (um para cada modelo, na mesma ordem)
+const obstacleScales = [
+  { x: 2, y: 2, z: 1.5 }, // obstacle1.glb
+  { x: 3, y: 5, z: 3 }, // obstacle2.glb
+  { x: 0.008, y: 0.013, z: 0.008 }, // obstacle3.glb
+];
+
+// Configuração da câmara
+const cameraPositions = [
+  { position: new THREE.Vector3(0, ground.height * 6, ground.depth * 0.32 + 13), lookAt: ground.position.clone() },
+  { position: new THREE.Vector3(10, ground.height * 10, -(ground.back-5)), lookAt: ground.position.clone() },
+  { position: new THREE.Vector3(-10, ground.height * 10, -(ground.back-5)), lookAt: ground.position.clone() },
+  { position: new THREE.Vector3(0, ground.height *65, 0), lookAt: ground.position.clone()}
+];
+
+let currentCameraIndex = 0;
+
+function setCameraPosition(index) {
+  const camPos = cameraPositions[index];
+  camera.position.copy(camPos.position);
+  if (camera.position.y < ground.top + 0.1) {
+    camera.position.y = ground.top + 0.1;
+  }
+  camera.lookAt(camPos.lookAt);
+}
+
+setCameraPosition(currentCameraIndex);
+
+// Troca de câmara
+window.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'v'|| 'V') {
+  }
+  if (event.key.toLowerCase() === 'v' && !window.inMainMenu) {
+    currentCameraIndex = (currentCameraIndex + 1) % cameraPositions.length;
+    setCameraPosition(currentCameraIndex);
+  }
+});
 
 const keys = {
   a: { pressed: false },
@@ -404,8 +452,9 @@ function restartGame() {
   isPaused = false;
 
   // Limpar inimigos existentes
-  enemies.forEach(enemy => {
-    scene.remove(enemy);
+  enemies.forEach(enemyObj => {
+    scene.remove(enemyObj.model);
+    scene.remove(enemyObj.box);
   });
   enemies.length = 0;
 
@@ -515,128 +564,210 @@ function animate() {
 
   cube.update(ground);
 
+    // Atualiza a posição do modelo 3D
+  if (cubeModel && cube) {
+    cubeModel.position.copy(cube.position);
+  }
+
   if (cube.bottom < ground.top - 5 || cube.top <= ground.top) {
     endGame("You", "fell!");
     cancelAnimationFrame(animationID);
     return;
   }
 
-  enemies.forEach(enemy => {
-    enemy.update(ground);
-    if (boxColision({ box1: cube, box2: enemy })) {
+  enemies.forEach((enemyObj, index) => {
+    // Atualiza o box invisível
+    enemyObj.box.update(ground);
+    // Move o modelo 3D para a posição do box
+    enemyObj.model.position.copy(enemyObj.box.position);
+
+    if (boxColision({ box1: cube, box2: enemyObj.box })) {
       endGame("You", "have collided!");
       cancelAnimationFrame(animationID);
+    }
+
+    // Remover inimigos fora do alcance
+    if (enemyObj.box.position.z > ground.front) {
+      scene.remove(enemyObj.model);
+      scene.remove(enemyObj.box);
+      enemies.splice(index, 1);
     }
   });
 
   if (frames % spawnRate === 0) {
     if (spawnRate > 25) spawnRate -= 10;
-    const enemy = new Box({
+    spawnObstacle();
+  }
+  frames++;
+}
+
+function spawnObstacle() {
+  // Escolhe aleatoriamente um modelo
+  const randomIndex = Math.floor(Math.random() * obstacleModels.length);
+  const modelPath = obstacleModels[randomIndex];
+  const scale = obstacleScales[randomIndex];
+
+  const loader = new GLTFLoader();
+  loader.load(modelPath, function(gltf) {
+    const obstacle = gltf.scene;
+    obstacle.scale.set(scale.x, scale.y, scale.z);
+    obstacle.rotation.y = Math.PI / 2;
+
+    // Adiciona temporariamente para calcular o bounding box
+    scene.add(obstacle);
+
+    // Calcula o bounding box já com o scale aplicado
+    const box3 = new THREE.Box3().setFromObject(obstacle);
+    const modelBaseY = box3.min.y;
+    const yOffset = ground.top - modelBaseY;
+
+    // Ajusta a posição Y para que a base do modelo fique exatamente no topo do ground
+    obstacle.position.set(
+      (Math.random() * (ground.right - ground.left)) + ground.left,
+      yOffset,
+      ground.back + 1.8 / 2 - 1
+    );
+
+    // Atualiza o bounding box após mover
+    box3.setFromObject(obstacle);
+
+    // Para movimento e colisão, associe um Box invisível
+    const box = new Box({
       width: 1,
       height: 1,
       depth: 1,
-      position: {
-        x: (Math.random() * (ground.right - ground.left)) + ground.left,
-        y: 0,
-        z: ground.back + cube.depth / 2 - 1
-      },
+      position: { x: obstacle.position.x, y: obstacle.position.y+3, z: obstacle.position.z },
       velocity: { x: 0, y: 0, z: enemySpeed },
       color: 'red',
       zAcceleration: true
     });
+    box.visible = false;
+    scene.add(box);
 
-    enemy.castShadow = true;
-    scene.add(enemy);
-    enemies.push(enemy);
+    obstacle.userData.box = box;
+
+    // Já está na cena, não precisa adicionar de novo
+    enemies.push({ model: obstacle, box: box });
+
     enemySpeed += 0.0008;
-  }
-
-  frames++;
+  });
 }
 
 let cube;
+let cubeModel; // NOVO: referência ao modelo 3D do singleplayer
 
-function startSinglePlayerGame(){
-  // Criar o cubo para o modo singleplayer
+function startSinglePlayerGame() {
+  // Criar o cubo invisível para lógica e colisão
   cube = new Box({
-    width: 1,
+    width: 2,
     height: 1,
     depth: 1,
     velocity: { x: 0, y: -0.01, z: 0 },
     position: { x: 0, y: 0, z: -(ground.back + 2) }
   });
   cube.castShadow = true;
+  cube.visible = false; // Torna o cubo invisível
   scene.add(cube);
 
-  // Inicializar o jogo
-  animate();
+  // Carregar o modelo 3D
+  const loader = new GLTFLoader();
+  loader.load('/assets/hat_cube.glb', function(gltf) {
+    // Remove modelo antigo se existir
+    if (cubeModel) {
+      scene.remove(cubeModel);
+      cubeModel = null;
+    }
+    cubeModel = gltf.scene;
+    cubeModel.position.copy(cube.position);
+    cubeModel.scale.set(0.5, 0.5, 0.5); // Ajusta o tamanho
+    cubeModel.rotation.y = Math.PI;      // Roda 180 graus
+    scene.add(cubeModel);
+
+    // Inicializar o jogo só depois do modelo estar carregado
+    animate();
+  });
 }
 
-document.getElementById("singleplayer-button").addEventListener("click", () => {
-  // Ocultar o menu inicial
-  const startMenu = document.getElementById("start-menu");
-  startMenu.style.display = "none";
-
-  // Mostrar o score
-  document.getElementById("score").style.display = "block";
-
-  // Atualizar estado
-  inMainMenu = false;
-
-  startSinglePlayerGame(); // Iniciar o jogo singleplayer
-});
-
-document.getElementById("multiplayer-button").addEventListener("click", () => {
-  // Ocultar o menu inicial
-  const startMenu = document.getElementById("start-menu");
-  startMenu.style.display = "none";
-
-  // Mostrar o score
-  document.getElementById("score").style.display = "block";
-
-  // Atualizar estado
-  inMainMenu = false;
-
-  // Configurar o modo multiplayer
-  setupMultiplayer();
-});
-
-document.getElementById("main-menu-button").addEventListener("click", () => {
-  // Atualizar estado
-  inMainMenu = true;
-  gameRunning = false;
-
-  // Esconder o score
-  document.getElementById("score").style.display = "none";
-
-  clearInterval(scoreInterval);
-
-  window.location.reload();
-});
+let player1Model; // Referência ao modelo 3D do player 1
+let player2Model; // Referência ao modelo 3D do player 2
+let player1Loaded = false;
+let player2Loaded = false;
 
 function setupMultiplayer() {
-  // Criar dois cubos para os jogadores
-  player1Cube = new Box({
-    width: 1,
-    height: 1,
-    depth: 1,
-    color: '#00ff00', // Verde
-    velocity: { x: 0, y: -0.01, z: 0 },
-    position: { x: -2, y: 0, z: -(ground.back + 2) }
-  });
-  player1Cube.castShadow = true;
-  scene.add(player1Cube);
+  const loader = new GLTFLoader();
 
-  player2Cube = new Box({
-    width: 1,
-    height: 1,
-    depth: 1,
-    color: '#ffff00', // Amarelo
-    velocity: { x: 0, y: -0.01, z: 0 },
-    position: { x: 2, y: 0, z: -(ground.back + 2) }
+  // Player 1
+  loader.load('/assets/hat_cube.glb', function(gltf) {
+    if (player1Model) {
+      scene.remove(player1Model);
+      player1Model = null;
+    }
+    player1Model = gltf.scene;
+    player1Model.scale.set(0.5, 0.5, 0.5);
+    player1Model.rotation.y = Math.PI;
+
+    // Calcula o bounding box do modelo já com o scale
+    scene.add(player1Model); // Adiciona temporariamente para calcular
+    const box3 = new THREE.Box3().setFromObject(player1Model);
+    const modelBaseY = box3.min.y;
+    const yOffset = ground.top - modelBaseY;
+
+    // Define a posição correta
+    player1Model.position.set(-2, yOffset, -(ground.back + 2));
+    // Se quiseres, podes remover e adicionar de novo, mas não é obrigatório
+
+    player1Cube = new Box({
+      width: 2,
+      height: 1,
+      depth: 1,
+      color: '#00ff00',
+      velocity: { x: 0, y: -0.01, z: 0 },
+      position: { x: -2, y: yOffset, z: -(ground.back + 2) }
+    });
+    player1Cube.visible = false;
+    scene.add(player1Cube);
+
+    player1Loaded = true;
+    startIfBothLoaded();
   });
-  player2Cube.castShadow = true;
-  scene.add(player2Cube);
+
+  // Player 2
+  loader.load('/assets/hat_cube.glb', function(gltf) {
+    if (player2Model) {
+      scene.remove(player2Model);
+      player2Model = null;
+    }
+    player2Model = gltf.scene;
+    player2Model.scale.set(0.5, 0.5, 0.5);
+    player2Model.rotation.y = Math.PI;
+
+    scene.add(player2Model);
+    const box3 = new THREE.Box3().setFromObject(player2Model);
+    const modelBaseY = box3.min.y;
+    const yOffset = ground.top - modelBaseY;
+
+    player2Model.position.set(2, yOffset, -(ground.back + 2));
+
+    player2Cube = new Box({
+      width: 1.8,
+      height: 1,
+      depth: 1,
+      color: '#ffff00',
+      velocity: { x: 0, y: -0.01, z: 0 },
+      position: { x: 2, y: yOffset, z: -(ground.back + 2) }
+    });
+    player2Cube.visible = false;
+    scene.add(player2Cube);
+
+    player2Loaded = true;
+    startIfBothLoaded();
+  });
+
+  function startIfBothLoaded() {
+    if (player1Loaded && player2Loaded) {
+      animateMultiplayer();
+    }
+  }
 
   keysPlayer1 = {
     a: { pressed: false },
@@ -685,8 +816,6 @@ function setupMultiplayer() {
     if (event.key === "ArrowUp") keysPlayer2.ArrowUp.pressed = false;
     if (event.key === "ArrowDown") keysPlayer2.ArrowDown.pressed = false;
   });
-
-  animateMultiplayer();
 }
 
 function animateMultiplayer() {
@@ -700,6 +829,13 @@ function animateMultiplayer() {
     if (keysPlayer1.s.pressed) player1Cube.velocity.z = 0.045;
     player1Cube.update(ground);
 
+    if (player1Model && player1Cube) {
+    player1Model.position.copy(player1Cube.position);
+    }
+    if (player2Model && player2Cube) {
+      player2Model.position.copy(player2Cube.position);
+    }
+
     player2Cube.velocity.x = 0;
     player2Cube.velocity.z = 0;
     if (keysPlayer2.ArrowLeft.pressed) player2Cube.velocity.x -= 0.045;
@@ -707,6 +843,10 @@ function animateMultiplayer() {
     if (keysPlayer2.ArrowUp.pressed) player2Cube.velocity.z = -0.045;
     if (keysPlayer2.ArrowDown.pressed) player2Cube.velocity.z = 0.045;
     player2Cube.update(ground);
+
+    if (player1Model && player1Cube) {
+      player1Model.position.copy(player1Cube.position);
+    }
 
     // Spawn de inimigos
     if (frames % spawnRate === 0) {
@@ -732,38 +872,42 @@ function animateMultiplayer() {
     }
 
     // Atualizar inimigos
-    enemies.forEach((enemy, index) => {
-      enemy.update(ground);
+    enemies.forEach((enemyObj, index) => {
+      // Atualiza o box invisível
+      enemyObj.box.update(ground);
+      // Move o modelo 3D para a posição do box
+      enemyObj.model.position.copy(enemyObj.box.position);
 
       // Verificar colisão com Player 1
-      if (boxColision({ box1: player1Cube, box2: enemy })) {
+      if (boxColision({ box1: player1Cube, box2: enemyObj.box })) {
         endGame("Player 1", "has colided!");
         cancelAnimationFrame(animationID);
         return;
       }
 
       // Verificar colisão com Player 2
-      if (boxColision({ box1: player2Cube, box2: enemy })) {
+      if (boxColision({ box1: player2Cube, box2: enemyObj.box })) {
         endGame("Player 2", "has colided!");
         cancelAnimationFrame(animationID);
         return;
       }
 
-      if (player1Cube.bottom < ground.top-5 || player1Cube.top <= ground.top) {
+      if (player1Cube.bottom < ground.top - 5 || player1Cube.top <= ground.top) {
         endGame("Player 1", "fell!");
         cancelAnimationFrame(animationID);
         return;
       }
 
-      if (player2Cube.bottom < ground.top-5 || player2Cube.top <= ground.top) {
+      if (player2Cube.bottom < ground.top - 5 || player2Cube.top <= ground.top) {
         endGame("Player 2", "fell!");
         cancelAnimationFrame(animationID);
         return;
       }
 
       // Remover inimigos fora do alcance
-      if (enemy.position.z > ground.front) {
-        scene.remove(enemy);
+      if (enemyObj.box.position.z > ground.front) {
+        scene.remove(enemyObj.model);
+        scene.remove(enemyObj.box);
         enemies.splice(index, 1);
       }
     });
@@ -876,6 +1020,48 @@ document.addEventListener('DOMContentLoaded', () => {
   if (inMainMenu) {
     playMenuMusic();
   }
+});
+
+document.getElementById("singleplayer-button").addEventListener("click", () => {
+  // Ocultar o menu inicial
+  const startMenu = document.getElementById("start-menu");
+  startMenu.style.display = "none";
+
+  // Mostrar o score
+  document.getElementById("score").style.display = "block";
+
+  // Atualizar estado
+  inMainMenu = false;
+
+  startSinglePlayerGame(); // Iniciar o jogo singleplayer
+});
+
+document.getElementById("multiplayer-button").addEventListener("click", () => {
+  // Ocultar o menu inicial
+  const startMenu = document.getElementById("start-menu");
+  startMenu.style.display = "none";
+
+  // Mostrar o score
+  document.getElementById("score").style.display = "block";
+
+  // Atualizar estado
+  inMainMenu = false;
+
+  // Configurar o modo multiplayer
+  setupMultiplayer();
+});
+
+document.getElementById("main-menu-button").addEventListener("click", () => {
+  // Atualizar estado
+  inMainMenu = true;
+  gameRunning = false;
+
+  // Esconder o score
+  document.getElementById("score").style.display = "none";
+
+  clearInterval(scoreInterval);
+
+  window.location.reload();
 });
 
 // Reproduzir música ao entrar no menu principal
