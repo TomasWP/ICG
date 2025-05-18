@@ -184,6 +184,22 @@ const obstacleScales = [
   { x: 0.008, y: 0.013, z: 0.008 }, // obstacle2.glb
 ];
 
+// PRÉ-CARREGAMENTO DOS MODELOS
+const loadedObstacleModels = [];
+const gltfLoader = new GLTFLoader();
+let obstaclesLoaded = false;
+
+Promise.all(obstacleModels.map((url, i) =>
+  new Promise((resolve) => {
+    gltfLoader.load(url, (gltf) => {
+      loadedObstacleModels[i] = gltf.scene;
+      resolve();
+    });
+  })
+)).then(() => {
+  obstaclesLoaded = true;
+});
+
 // Configuração da câmara
 const cameraPositions = [
   { position: new THREE.Vector3(0, ground.height * 6, ground.depth * 0.32 + 13), lookAt: ground.position.clone() },
@@ -598,7 +614,9 @@ function animate() {
 }
 
 function spawnObstacle() {
-  const maxTries = 10; // Número máximo de tentativas para evitar loop infinito
+  if (!obstaclesLoaded) return; // Garante que só spawna após carregar
+
+  const maxTries = 10;
   let tries = 0;
   let validPosition = false;
   let spawnX, spawnZ;
@@ -607,12 +625,11 @@ function spawnObstacle() {
     spawnX = (Math.random() * (ground.right - ground.left)) + ground.left;
     spawnZ = ground.back + 1.8 / 2 - 1;
 
-    // Verifica se está suficientemente afastado dos outros obstáculos
     validPosition = true;
     for (const enemy of enemies) {
       const dx = Math.abs(enemy.box.position.x - spawnX);
       const dz = Math.abs(enemy.box.position.z - spawnZ);
-      if (dx < 2 && dz < 2) { // Ajusta o valor mínimo de distância conforme o tamanho dos obstáculos
+      if (dx < 2 && dz < 2) {
         validPosition = false;
         break;
       }
@@ -620,49 +637,41 @@ function spawnObstacle() {
     tries++;
   }
 
-  // Só faz spawn se encontrou uma posição válida
   if (validPosition) {
-    const randomIndex = Math.floor(Math.random() * obstacleModels.length);
-    const modelPath = obstacleModels[randomIndex];
+    const randomIndex = Math.floor(Math.random() * loadedObstacleModels.length);
     const scale = obstacleScales[randomIndex];
 
-    const loader = new GLTFLoader();
-    loader.load(modelPath, function(gltf) {
-      const obstacle = gltf.scene;
-      obstacle.scale.set(scale.x, scale.y, scale.z);
-      obstacle.rotation.y = Math.PI / 2;
+    const obstacle = loadedObstacleModels[randomIndex].clone(true);
+    obstacle.scale.set(scale.x, scale.y, scale.z);
+    obstacle.rotation.y = Math.PI / 2;
+    scene.add(obstacle);
 
-      scene.add(obstacle);
+    const box3 = new THREE.Box3().setFromObject(obstacle);
+    const modelBaseY = box3.min.y;
+    const yOffset = ground.top - modelBaseY;
 
-      // Calcula o bounding box já com o scale aplicado
-      const box3 = new THREE.Box3().setFromObject(obstacle);
-      const modelBaseY = box3.min.y;
-      const yOffset = ground.top - modelBaseY;
+    obstacle.position.set(
+      spawnX,
+      yOffset,
+      spawnZ
+    );
 
-      obstacle.position.set(
-        spawnX,
-        yOffset,
-        spawnZ
-      );
-
-      // Para movimento e colisão, associe um Box invisível
-      const box = new Box({
-        width: 1,
-        height: 1,
-        depth: 1,
-        position: { x: obstacle.position.x, y: obstacle.position.y, z: obstacle.position.z },
-        velocity: { x: 0, y: 0, z: enemySpeed },
-        color: 'red',
-        zAcceleration: true
-      });
-      box.visible = false;
-      scene.add(box);
-
-      obstacle.userData.box = box;
-      enemies.push({ model: obstacle, box: box });
-
-      enemySpeed += 0.0008;
+    const box = new Box({
+      width: 1,
+      height: 1,
+      depth: 1,
+      position: { x: obstacle.position.x, y: obstacle.position.y, z: obstacle.position.z },
+      velocity: { x: 0, y: 0, z: enemySpeed },
+      color: 'red',
+      zAcceleration: true
     });
+    box.visible = false;
+    scene.add(box);
+
+    obstacle.userData.box = box;
+    enemies.push({ model: obstacle, box: box });
+
+    enemySpeed += 0.0008;
   }
 }
 
@@ -676,7 +685,7 @@ function startSinglePlayerGame() {
     height: 1,
     depth: 1,
     velocity: { x: 0, y: -0.01, z: 0 },
-    position: { x: 0, y: 0, z: -(ground.back + 2) }
+    position: { x: 0, y: 3, z: -(ground.back + 2) }
   });
   cube.castShadow = true;
   cube.visible = false; // Torna o cubo invisível
@@ -735,7 +744,7 @@ function setupMultiplayer() {
       depth: 1,
       color: '#00ff00',
       velocity: { x: 0, y: -0.01, z: 0 },
-      position: { x: -2, y: yOffset, z: -(ground.back + 2) }
+      position: { x: -2, y: 3, z: -(ground.back + 2) }
     });
     player1Cube.visible = false;
     scene.add(player1Cube);
@@ -767,7 +776,7 @@ function setupMultiplayer() {
       depth: 1,
       color: '#ffff00',
       velocity: { x: 0, y: -0.01, z: 0 },
-      position: { x: 2, y: yOffset, z: -(ground.back + 2) }
+      position: { x: 2, y: 3, z: -(ground.back + 2) }
     });
     player2Cube.visible = false;
     scene.add(player2Cube);
@@ -864,41 +873,21 @@ function animateMultiplayer() {
     // Spawn de inimigos
     if (frames % spawnRate === 0) {
       if (spawnRate > 25) spawnRate -= 10;
-      const enemy = new Box({
-        width: 1,
-        height: 1,
-        depth: 1,
-        position: {
-          x: (Math.random() * (ground.right - ground.left)) + ground.left,
-          y: 0,
-          z: ground.back + player1Cube.depth / 2 - 1
-        },
-        velocity: { x: 0, y: 0, z: enemySpeed },
-        color: 'red',
-        zAcceleration: true
-      });
-
-      enemy.castShadow = true;
-      scene.add(enemy);
-      enemies.push(enemy);
-      enemySpeed += 0.0008;
+      spawnObstacleMultiplayer();
     }
+
 
     // Atualizar inimigos
     enemies.forEach((enemyObj, index) => {
-      // Atualiza o box invisível
       enemyObj.box.update(ground);
-      // Move o modelo 3D para a posição do box
       enemyObj.model.position.copy(enemyObj.box.position);
 
-      // Verificar colisão com Player 1
       if (boxColision({ box1: player1Cube, box2: enemyObj.box })) {
         endGame("Player 1", "has colided!");
         cancelAnimationFrame(animationID);
         return;
       }
 
-      // Verificar colisão com Player 2
       if (boxColision({ box1: player2Cube, box2: enemyObj.box })) {
         endGame("Player 2", "has colided!");
         cancelAnimationFrame(animationID);
@@ -917,7 +906,6 @@ function animateMultiplayer() {
         return;
       }
 
-      // Remover inimigos fora do alcance
       if (enemyObj.box.position.z > ground.front) {
         scene.remove(enemyObj.model);
         scene.remove(enemyObj.box);
@@ -929,7 +917,65 @@ function animateMultiplayer() {
 
     renderer.render(scene, camera);
     requestAnimationFrame(animateMultiplayer);
+}
+
+function spawnObstacleMultiplayer() {
+  if (!obstaclesLoaded) return;
+
+  const maxTries = 10;
+  let tries = 0;
+  let validPosition = false;
+  let spawnX, spawnZ;
+
+  while (!validPosition && tries < maxTries) {
+    spawnX = (Math.random() * (ground.right - ground.left)) + ground.left;
+    spawnZ = ground.back + 1.8 / 2 - 1;
+
+    validPosition = true;
+    for (const enemy of enemies) {
+      const dx = Math.abs(enemy.box.position.x - spawnX);
+      const dz = Math.abs(enemy.box.position.z - spawnZ);
+      if (dx < 2 && dz < 2) {
+        validPosition = false;
+        break;
+      }
+    }
+    tries++;
   }
+
+  if (validPosition) {
+    const randomIndex = Math.floor(Math.random() * loadedObstacleModels.length);
+    const scale = obstacleScales[randomIndex];
+
+    const obstacle = loadedObstacleModels[randomIndex].clone(true);
+    obstacle.scale.set(scale.x, scale.y, scale.z);
+    obstacle.rotation.y = Math.PI / 2;
+    scene.add(obstacle);
+
+    const box3 = new THREE.Box3().setFromObject(obstacle);
+    const modelBaseY = box3.min.y;
+    const yOffset = ground.top - modelBaseY;
+
+    obstacle.position.set(spawnX, yOffset, spawnZ);
+
+    const box = new Box({
+      width: 1,
+      height: 1,
+      depth: 1,
+      position: { x: obstacle.position.x, y: obstacle.position.y, z: obstacle.position.z },
+      velocity: { x: 0, y: 0, z: enemySpeed },
+      color: 'red',
+      zAcceleration: true
+    });
+    box.visible = false;
+    scene.add(box);
+
+    obstacle.userData.box = box;
+    enemies.push({ model: obstacle, box: box });
+
+    enemySpeed += 0.0008;
+  }
+}
 
 scoreInterval = setInterval(() => {
   if (gameRunning && !isPaused && !inMainMenu) {
@@ -995,44 +1041,41 @@ const volumeSlider = document.getElementById('volume-slider');
 // Atualizar o volume da música com o slider
 volumeSlider.addEventListener('input', () => {
   menuMusic.volume = volumeSlider.value;
-  localStorage.setItem('menuMusicVolume', volumeSlider.value); // Salva o volume no localStorage
+  localStorage.setItem('menuMusicVolume', volumeSlider.value);
 
   if (menuMusic.volume === 0) {
-    muteButton.textContent = '🔇'; // Atualiza o ícone para mute
+    muteButton.textContent = '🔇';
+    menuMusic.pause();
   } else {
-    muteButton.textContent = '🔊'; // Atualiza o ícone para som
+    muteButton.textContent = '🔊';
+    playMenuMusic(); // <-- Toca a música se o volume for maior que 0
   }
 });
 
 // Alternar mute ao clicar no botão
+let lastVolume = 0.2; // valor padrão ao tirar mute
+
 muteButton.addEventListener('click', () => {
   if (menuMusic.volume > 0) {
+    lastVolume = menuMusic.volume; // guarda o volume antes de mutar
     menuMusic.volume = 0;
     volumeSlider.value = 0;
-    muteButton.textContent = '🔇'; // Atualiza o ícone para mute
+    muteButton.textContent = '🔇';
+    menuMusic.pause();
   } else {
-    menuMusic.volume = localStorage.getItem('menuMusicVolume') || 0.5; // Recupera o volume salvo ou define o padrão
-    volumeSlider.value = menuMusic.volume;
-    muteButton.textContent = '🔊'; // Atualiza o ícone para som
+    menuMusic.volume = lastVolume;
+    volumeSlider.value = lastVolume;
+    muteButton.textContent = '🔊';
+    playMenuMusic();
+    localStorage.setItem('menuMusicVolume', lastVolume);
   }
-
-  localStorage.setItem('menuMusicVolume', menuMusic.volume); // Salva o volume no localStorage
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  const savedVolume = localStorage.getItem('menuMusicVolume'); // Recupera o volume salvo
-  if (savedVolume !== null) {
-    menuMusic.volume = savedVolume;
-    volumeSlider.value = savedVolume;
-    muteButton.textContent = savedVolume > 0 ? '🔊' : '🔇'; // Atualiza o ícone
-  } else {
-    menuMusic.volume = 0.5; // Define o volume padrão
-    volumeSlider.value = 0.5;
-  }
-
-  if (inMainMenu) {
-    playMenuMusic();
-  }
+  menuMusic.volume = 0;
+  volumeSlider.value = 0;
+  muteButton.textContent = '🔇';
+  localStorage.setItem('menuMusicVolume', 0);
 });
 
 document.getElementById("singleplayer-button").addEventListener("click", () => {
@@ -1081,7 +1124,9 @@ document.getElementById("main-menu-button").addEventListener("click", () => {
 function playMenuMusic() {
   const savedVolume = localStorage.getItem('menuMusicVolume'); // Recupera o volume salvo
   menuMusic.volume = savedVolume !== null ? savedVolume : 0.5; // Usa o volume salvo ou define o padrão como 0.5
-  menuMusic.play();
+  if (menuMusic.volume > 0) {
+    menuMusic.play();
+  }
 }
 
 // Pausar música ao sair do menu principal
@@ -1089,13 +1134,6 @@ function stopMenuMusic() {
   menuMusic.pause();
   menuMusic.currentTime = 0; // Reinicia a música
 }
-
-// Iniciar música ao carregar o menu principal
-document.addEventListener('DOMContentLoaded', () => {
-  if (inMainMenu) {
-    playMenuMusic();
-  }
-});
 
 // Parar música ao iniciar o jogo
 document.getElementById("singleplayer-button").addEventListener("click", () => {
