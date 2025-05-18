@@ -813,6 +813,7 @@ function setupMultiplayer() {
     if (event.key === "w") keysPlayer1.w.pressed = true;
     if (event.key === "s") keysPlayer1.s.pressed = true;
     if (event.code === "Space" && player1Cube.canJump) {
+      playJumpSound(); // Adiciona o som de salto para o Player 1
       player1Cube.velocity.y = 0.1;
       player1Cube.canJump = false;
     }
@@ -822,6 +823,7 @@ function setupMultiplayer() {
     if (event.key === "ArrowUp") keysPlayer2.ArrowUp.pressed = true;
     if (event.key === "ArrowDown") keysPlayer2.ArrowDown.pressed = true;
     if (event.key === "p" && player2Cube.canJump) {
+      playJumpSound(); // Adiciona o som de salto para o Player 1
       player2Cube.velocity.y = 0.1;
       player2Cube.canJump = false;
     }
